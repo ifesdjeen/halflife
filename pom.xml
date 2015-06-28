@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>halflife</groupId>
+  <artifactId>halflife</artifactId>
+  <packaging>pom</packaging>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>halflife</name>
+  <description>Halflife</description>
+
+  <licenses>
+    <license>
+      <name>Copyright Alex Petrov</name>
+    </license>
+  </licenses>
+
+  <properties>
+    <reactor.version>2.0.3.RELEASE</reactor.version>
+    <argLine.common>
+      -server
+      -dsa -da
+      -XX:+AggressiveOpts
+      -XX:+TieredCompilation
+      -XX:+UseBiasedLocking
+      -XX:+UseFastAccessorMethods
+      -XX:+OptimizeStringConcat
+      -XX:+HeapDumpOnOutOfMemoryError
+    </argLine.common>
+    <argLine.leak>-verbose:gc</argLine.leak>
+    <!-- Overridden when 'leak' profile is active -->
+    <argLine.coverage>-D_</argLine.coverage>
+    <!-- Overridden when 'coverage' profile is active -->
+  </properties>
+
+  <build>
+    <sourceDirectory>src/java</sourceDirectory>
+    <testSourceDirectory>src/java</testSourceDirectory>
+    <resources>
+      <resource>
+        <directory>resources</directory>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>dev-resources</directory>
+      </testResource>
+      <testResource>
+        <directory>resources</directory>
+      </testResource>
+    </testResources>
+    <directory>target</directory>
+    <outputDirectory>target/classes</outputDirectory>
+
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.2</version>
+        <configuration>
+          <compilerVersion>1.8</compilerVersion>
+          <fork>true</fork>
+          <source>1.8</source>
+          <target>1.8</target>
+          <debug>true</debug>
+          <optimize>true</optimize>
+          <showDeprecation>true</showDeprecation>
+          <showWarnings>true</showWarnings>
+          <compilerArgument>-Xlint:-options</compilerArgument>
+          <meminitial>256m</meminitial>
+          <maxmem>1024m</maxmem>
+          <excludes>
+            <exclude>**/package-info.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.18.1</version>
+        <configuration>
+          <includes>
+            <include>**/*Test*.java</include>
+            <include>**/*Benchmark*.java</include>
+          </includes>
+          <excludes>
+            <exclude>**/Util*</exclude>
+          </excludes>
+          <runOrder>random</runOrder>
+          <argLine>${argLine.common} ${argLine.coverage}</argLine>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.5</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.3</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.7</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.10</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.5.3</version>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
+      <version>${reactor.version}</version>
+    </dependency>
+  </dependencies>
+
+</project>
