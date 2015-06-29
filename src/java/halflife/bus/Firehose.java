@@ -26,8 +26,8 @@ public class Firehose<T> {
     Assert.notNull(ev, "Event cannot be null.");
 
     dispatcher.dispatch(ev, t -> {
-      for (Registration<Object, ? extends Consumer<T>> reg : consumerRegistry.select(key)) {
-        reg.getObject().accept(t);
+      for (Registration<Object, ? extends KeyedConsumer<T>> reg : consumerRegistry.select(key)) {
+        reg.getObject().accept(key, t);
       }
     }, dispatchErrorHandler);
 
@@ -39,5 +39,5 @@ public class Firehose<T> {
     return this;
   }
 
-  // TODO:
+  // TODO: match
 }
