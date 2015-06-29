@@ -37,7 +37,7 @@
 
   <build>
     <sourceDirectory>src/java</sourceDirectory>
-    <testSourceDirectory>src/java</testSourceDirectory>
+    <testSourceDirectory>test/java</testSourceDirectory>
     <resources>
       <resource>
         <directory>resources</directory>
