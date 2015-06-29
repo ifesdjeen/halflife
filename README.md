@@ -1,4 +1,4 @@
-# Halflife - in-process challels and streams
+# Halflife - in-process channels and streams
 
 Halflife is an evolvement and extension of our recent works and ideas on
 [Reactor]() and [Meltdown]().
