@@ -9,12 +9,12 @@ import reactor.fn.Consumer;
 
 public class Firehose<T> {
 
-  private final Dispatcher                    dispatcher;
-  private final Registry<Object, Consumer<T>> consumerRegistry;
-  private final Consumer<Throwable>           dispatchErrorHandler;
+  private final Dispatcher                         dispatcher;
+  private final Registry<Object, KeyedConsumer<T>> consumerRegistry;
+  private final Consumer<Throwable>                dispatchErrorHandler;
 
   public Firehose(Dispatcher dispatcher,
-                  Registry<Object, Consumer<T>> registry,
+                  Registry<Object, KeyedConsumer<T>> registry,
                   Consumer<Throwable> dispatchErrorHandler) {
     this.dispatcher = dispatcher;
     this.consumerRegistry = registry;
@@ -25,17 +25,19 @@ public class Firehose<T> {
     Assert.notNull(key, "Key cannot be null.");
     Assert.notNull(ev, "Event cannot be null.");
 
-    dispatcher.dispatch(ev, new Consumer<T>() {
-      @Override
-      public void accept(T t) {
-        for (Registration<Object, ? extends Consumer<T>> reg: consumerRegistry.select(key)) {
-          reg.getObject().accept(t);
-        }
+    dispatcher.dispatch(ev, t -> {
+      for (Registration<Object, ? extends Consumer<T>> reg : consumerRegistry.select(key)) {
+        reg.getObject().accept(t);
       }
     }, dispatchErrorHandler);
 
     return this;
   }
 
+  public Firehose<T> on(Object key, KeyedConsumer<T> consumer) {
+    consumerRegistry.register(key, consumer);
+    return this;
+  }
 
+  // TODO:
 }

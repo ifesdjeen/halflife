@@ -10,7 +10,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ConcurrentRegistry<K, V> implements Registry<K, V> {
 
   private final Map<Object, List<Registration<K, ? extends V>>> lookupMap;
-  private final ReentrantLock                         lock;
+  private final ReentrantLock                                   lock;
 
   public ConcurrentRegistry() {
     this.lookupMap = new ConcurrentHashMap<>();
