@@ -1,32 +1,33 @@
 package halflife.bus;
 
-import halflife.bus.registry.Registration;
-import halflife.bus.registry.Registry;
+import halflife.bus.registry.*;
 import reactor.core.Dispatcher;
 import reactor.core.support.Assert;
 import reactor.fn.Consumer;
 
+import java.util.function.Supplier;
 
-public class Firehose<T> {
 
-  private final Dispatcher                         dispatcher;
-  private final Registry<Object, KeyedConsumer<T>> consumerRegistry;
-  private final Consumer<Throwable>                dispatchErrorHandler;
+public class Firehose<K, V> {
+
+  private final Dispatcher                              dispatcher;
+  private final DefaultingRegistry<K, KeyedConsumer<V>> consumerRegistry;
+  private final Consumer<Throwable>                     dispatchErrorHandler;
 
   public Firehose(Dispatcher dispatcher,
-                  Registry<Object, KeyedConsumer<T>> registry,
+                  DefaultingRegistry<K, KeyedConsumer<V>> registry,
                   Consumer<Throwable> dispatchErrorHandler) {
     this.dispatcher = dispatcher;
     this.consumerRegistry = registry;
     this.dispatchErrorHandler = dispatchErrorHandler;
   }
 
-  public Firehose<T> notify(Object key, T ev) {
+  public Firehose<K, V> notify(K key, V ev) {
     Assert.notNull(key, "Key cannot be null.");
     Assert.notNull(ev, "Event cannot be null.");
 
     dispatcher.dispatch(ev, t -> {
-      for (Registration<Object, ? extends KeyedConsumer<T>> reg : consumerRegistry.select(key)) {
+      for (Registration<K, ? extends KeyedConsumer<V>> reg : consumerRegistry.select(key)) {
         reg.getObject().accept(key, t);
       }
     }, dispatchErrorHandler);
@@ -34,8 +35,18 @@ public class Firehose<T> {
     return this;
   }
 
-  public Firehose<T> on(Object key, KeyedConsumer<T> consumer) {
+  public Firehose<K, V> on(K key, KeyedConsumer<V> consumer) {
     consumerRegistry.register(key, consumer);
+    return this;
+  }
+
+  public Firehose<K, V> on(K key, SimpleConsumer<V> consumer) {
+    consumerRegistry.register(key, SimpleConsumer.wrap(consumer));
+    return this;
+  }
+
+  public Firehose<K, V> miss(KeyMissMatcher<K> matcher, Supplier<KeyedConsumer<V>> supplier) {
+    consumerRegistry.addKeyMissMatcher(matcher, supplier);
     return this;
   }
 
