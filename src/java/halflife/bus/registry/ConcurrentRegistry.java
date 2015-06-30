@@ -6,15 +6,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
-public class ConcurrentRegistry<K, V> implements Registry<K, V> {
+public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
 
   private final Map<Object, List<Registration<K, ? extends V>>> lookupMap;
+  private final Map<KeyMissMatcher<K>, Supplier<? extends V>>   keyMissMatchers;
   private final ReentrantLock                                   lock;
 
   public ConcurrentRegistry() {
     this.lookupMap = new ConcurrentHashMap<>();
+    this.keyMissMatchers = new ConcurrentHashMap<>();
     this.lock = new ReentrantLock();
+
+  }
+
+  public void addKeyMissMatcher(KeyMissMatcher<K> matcher,
+                                Supplier<? extends V> supplier) {
+    this.keyMissMatchers.put(matcher, supplier);
   }
 
   @Override
@@ -27,6 +36,7 @@ public class ConcurrentRegistry<K, V> implements Registry<K, V> {
                                                                     handler,
                                                                     reg1 -> lookupMap.get(obj).remove(handler));
       emptyArr.add(reg);
+
       lookupMap.put(obj, emptyArr);
       return reg;
     } else {
@@ -50,11 +60,26 @@ public class ConcurrentRegistry<K, V> implements Registry<K, V> {
   }
 
   @Override
-  public List<Registration<K, ? extends V>> select(K key) {
-    List<Registration<K, ? extends V>> lookedUp = lookupMap.get(key);
+  public List<Registration<K, ? extends V>> select(final K key) {
+    lookupMap.computeIfAbsent(key, (k_) -> {
+      final List<Registration<K, ? extends V>> acc = new ArrayList<>();
+      keyMissMatchers.entrySet()
+                            .stream()
+                            .filter((m) -> m.getKey().test(key))
+                            .forEach((matcher) ->  {
+                              V handler = matcher.getValue().get();
+                              acc.add(new SimpleRegistration<>(key,
+                                                               handler,
+                                                               reg ->  acc.remove(handler)));
 
-    return lookedUp;
+                            });
+      return acc;
+    });
+
+
+    return lookupMap.get(key);
   }
+
 
   @Override
   public void clear() {
