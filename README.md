@@ -13,6 +13,7 @@ Main features include:
   * Independent Per-Entity Streams
   * Atomic State operations
   * Persistent-collection based handlers
+  * Multiple dispatch strategies (use same topology to dispatch on Disruptor, ThreadPool or anything else)
   * Integration with Databases for persisting Stream information between restarts
   * Integration with Message Queues for distribution and fault-tolerance
   
