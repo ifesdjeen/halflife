@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class StreamTest {
+public class StreamTest extends AbstractFirehoseTest {
 
   private Dispatcher                                           dispatcher;
   private DefaultingRegistry<Key, KeyedConsumer<Key, Integer>> consumerRegistry;
