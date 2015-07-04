@@ -62,5 +62,12 @@ public class Key {
   public static Key wrap(Object k) {
     return new Key(new Object[] { k } );
   }
+
+  @Override
+  public String toString() {
+    return "Key{" +
+           "parts=" + Arrays.toString(parts) +
+           '}';
+  }
 }
 
