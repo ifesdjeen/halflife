@@ -2,7 +2,7 @@ package halflife.bus.registry;
 
 import java.util.List;
 
-public interface Registry<K, V> extends Iterable<Registration<K, ? extends V>> {
+public interface Registry<K, V> extends Iterable<Registration<K, V>> {
 
   Registration<K, V> register(K sel, V obj);
 

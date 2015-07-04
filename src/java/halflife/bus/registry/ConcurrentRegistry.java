@@ -83,11 +83,13 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
 
   @Override
   public void clear() {
-
+    this.lookupMap.clear();
+    this.keyMissMatchers.clear();
   }
 
+
   @Override
-  public Iterator<Registration<K, ? extends V>> iterator() {
+  public Iterator<Registration<K, V>> iterator() {
     return null;
   }
 }
