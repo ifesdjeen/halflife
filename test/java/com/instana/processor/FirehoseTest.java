@@ -21,10 +21,10 @@ import static org.junit.Assert.assertThat;
 
 public class FirehoseTest {
 
-  private Dispatcher                                         dispatcher;
-  private DefaultingRegistry<String, KeyedConsumer<Integer>> consumerRegistry;
-  private Consumer<Throwable>                                dispatchErrorHandler;
-  private Firehose<String, Integer>                          firehose;
+  private Dispatcher                                                 dispatcher;
+  private DefaultingRegistry<String, KeyedConsumer<String, Integer>> consumerRegistry;
+  private Consumer<Throwable>                                        dispatchErrorHandler;
+  private Firehose<String, Integer>                                  firehose;
 
   @Before
   public void setup() {
