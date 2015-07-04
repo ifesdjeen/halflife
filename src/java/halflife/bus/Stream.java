@@ -1,6 +1,7 @@
 package halflife.bus;
 
 import halflife.bus.key.Key;
+import halflife.bus.registry.KeyMissMatcher;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -34,13 +35,13 @@ public class Stream<V> {
     return new AnonymousStream(source, this).map(mapper);
   }
 
-//  @SuppressWarnings(value = {"unchecked"})
-//  public <SRC extends Key, V1> AnonymousStream<V1> map(KeyMissMatcher<SRC> keyMatcher,
-//                                                       Function<V, V1> mapper) {
-//    AnonymousStream<V1> downstream = new AnonymousStream<>();
-//    firehose.miss(keyMatcher, downstream.subscriber());
-//    return downstream;
-//  }
+  @SuppressWarnings(value = {"unchecked"})
+  public <SRC extends Key, V1> MatchedStream<V1> map(KeyMissMatcher<SRC> keyMatcher,
+                                                     Function<V, V1> mapper) {
+    MatchedStream<V> downstream = new MatchedStream<>();
+    //firehose.miss(keyMatcher, downstream.subscribers(this));
+    return downstream.map(mapper);
+  }
 
   @SuppressWarnings(value = {"unchecked"})
   public <SRC extends Key> void consume(SRC source,
@@ -53,6 +54,8 @@ public class Stream<V> {
     });
   }
 
-
+  public <SRC extends Key> void notify(SRC src, V v) {
+    this.firehose.notify(src, v);
+  }
 
 }

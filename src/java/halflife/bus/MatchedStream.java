@@ -6,46 +6,43 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
-public class MatchedStream<V> {
-
-  private final List<Supplier<KeyedConsumer<? extends Key, V>>> suppliers;
+public class MatchedStream<V> extends FinalizedMatchedStream<V> {
 
   public MatchedStream() {
-    this(new LinkedList<>());
+    super(new LinkedList<>());
+  }
+
+  protected MatchedStream(List<MatchedStream.StreamSupplier> suppliers) {
+    super(suppliers);
   }
 
   @SuppressWarnings(value = {"unchecked"})
   public <V1> MatchedStream<V1> map(Function<V, V1> mapper) {
-    this.suppliers.add(() -> {
-      return new KeyedConsumer<Key, V>() {
-        @Override
-        public void accept(Key key, V value) {
-
-        }
-      };
+    this.suppliers.add(new StreamSupplier<V>() {
+      @Override
+      public <SRC extends Key, DST extends Key> void get(SRC src, DST dst, Stream<V> stream) {
+        stream.map(src, dst, mapper);
+      }
     });
-    return null;
+    return new MatchedStream<>(suppliers);
   }
 
   @SuppressWarnings(value = {"unchecked"})
-  public <V1> MatchedStream<V1> consume(Consumer<V1> consumer) {
-    return null;
+  public FinalizedMatchedStream consume(Consumer<V> consumer) {
+    this.suppliers.add(new StreamSupplier<V>() {
+      @Override
+      public <SRC extends Key, DST extends Key> void get(SRC src, DST dst, Stream<V> stream) {
+        stream.consume(src, consumer);
+      }
+    });
+    return new FinalizedMatchedStream(suppliers);
   }
 
-  protected MatchedStream(List<Supplier<KeyedConsumer<? extends Key, V>>> suppliers) {
-    this.suppliers = suppliers;
+  @FunctionalInterface
+  public static interface StreamSupplier<V> {
+    public <SRC extends Key, DST extends Key> void get(SRC src, DST dst, Stream<V> stream);
   }
 
-  public Supplier<KeyedConsumer<? extends Key, V>> subscriber(Stream stream) {
-    return () -> {
-      return new KeyedConsumer<Key, V>() {
-        @Override
-        public void accept(Key k, V value) {
 
-        }
-      };
-    };
-  }
 }
