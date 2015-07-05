@@ -6,6 +6,7 @@ import org.junit.Test;
 import reactor.fn.tuple.Tuple;
 import reactor.fn.tuple.Tuple2;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.core.Is.is;
@@ -45,10 +46,10 @@ public class FirehoseTest extends AbstractFirehoseTest {
     AVar<Tuple2> val = new AVar<>();
 
     firehose.miss((k_) -> true,
-                  () -> {
-                    return (key, value) -> {
+                  (k_) -> {
+                    return Collections.singletonList((key, value) -> {
                       val.set(Tuple.of(key, value));
-                    };
+                    });
                   });
 
     firehose.notify(Key.wrap("key1"), 1);
