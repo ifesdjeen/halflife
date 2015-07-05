@@ -2,6 +2,7 @@ package halflife.bus;
 
 import halflife.bus.key.Key;
 
+import javax.lang.model.type.NullType;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -19,10 +20,15 @@ public class MatchedStream<V> extends FinalizedMatchedStream<V> {
 
   @SuppressWarnings(value = {"unchecked"})
   public <V1> MatchedStream<V1> map(Function<V, V1> mapper) {
-    this.suppliers.add(new StreamSupplier<V>() {
+    this.suppliers.add(new StreamSupplier<V, V1>() {
       @Override
-      public <SRC extends Key, DST extends Key> void get(SRC src, DST dst, Stream<V> stream) {
-        stream.map(src, dst, mapper);
+      public <SRC extends Key, DST extends Key> KeyedConsumer<SRC, V> get(SRC src,
+                                                                          DST dst,
+                                                                          Stream<V1> stream) {
+        return (key, value) -> {
+          //System.out.printf("K: %s V: %s DST: %s\n", key, value, mapper.apply(value));
+          stream.notify(dst, mapper.apply(value));
+        };
       }
     });
     return new MatchedStream<>(suppliers);
@@ -30,18 +36,22 @@ public class MatchedStream<V> extends FinalizedMatchedStream<V> {
 
   @SuppressWarnings(value = {"unchecked"})
   public FinalizedMatchedStream consume(Consumer<V> consumer) {
-    this.suppliers.add(new StreamSupplier<V>() {
+    this.suppliers.add(new StreamSupplier<V, NullType>() {
       @Override
-      public <SRC extends Key, DST extends Key> void get(SRC src, DST dst, Stream<V> stream) {
-        stream.consume(src, consumer);
+      public <SRC extends Key, DST extends Key> KeyedConsumer<SRC, V> get(SRC src,
+                                                                          DST dst,
+                                                                          Stream<NullType> stream) {
+        return (key, value) -> consumer.accept(value);
       }
     });
     return new FinalizedMatchedStream(suppliers);
   }
 
   @FunctionalInterface
-  public static interface StreamSupplier<V> {
-    public <SRC extends Key, DST extends Key> void get(SRC src, DST dst, Stream<V> stream);
+  public static interface StreamSupplier<V, V1> {
+    public <SRC extends Key, DST extends Key> KeyedConsumer<SRC, V> get(SRC src,
+                                                                        DST dst,
+                                                                        Stream<V1> stream);
   }
 
 
