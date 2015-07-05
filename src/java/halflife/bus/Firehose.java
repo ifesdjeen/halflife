@@ -7,6 +7,9 @@ import reactor.core.Dispatcher;
 import reactor.core.support.Assert;
 import reactor.fn.Consumer;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 
@@ -47,7 +50,8 @@ public class Firehose<K, V> {
     return this;
   }
 
-  public Firehose<K, V> miss(KeyMissMatcher<K> matcher, Supplier<KeyedConsumer<K, V>> supplier) {
+  public Firehose<K, V> miss(KeyMissMatcher<K> matcher,
+                             Function<K, List<? extends KeyedConsumer<K, V>>> supplier) {
     consumerRegistry.addKeyMissMatcher(matcher, supplier);
     return this;
   }

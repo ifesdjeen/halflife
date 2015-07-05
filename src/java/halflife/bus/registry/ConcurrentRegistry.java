@@ -11,20 +11,21 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
 
   private final Atom<PMap<Object, PVector<Registration<K, ? extends V>>>> lookupMap;
-  private final Map<KeyMissMatcher<K>, Supplier<? extends V>>             keyMissMatchers;
+  private final Map<KeyMissMatcher<K>, Function<K, List<? extends V>>>    keyMissMatchers;
 
   public ConcurrentRegistry() {
     this.lookupMap = new Atom<>(HashTreePMap.empty());
     this.keyMissMatchers = new ConcurrentHashMap<>();
   }
 
-  public void addKeyMissMatcher(KeyMissMatcher<K> matcher,
-                                Supplier<? extends V> supplier) {
+  @Override
+  public void addKeyMissMatcher(KeyMissMatcher<K> matcher, Function<K, List<? extends V>> supplier) {
     this.keyMissMatchers.put(matcher, supplier);
   }
 
@@ -80,12 +81,13 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
                        .stream()
                        .filter((m) -> m.getKey().test(key))
                        .forEach((matcher) -> {
-                         V handler = matcher.getValue().get();
-                         acc.add(new SimpleRegistration<>(key,
-                                                          handler,
-                                                          // TODO: FIX REMOVES!!!
-                                                          reg -> acc.remove(handler)));
-
+                         List<? extends V> handlers = matcher.getValue().apply(key);
+                         for (V handler: handlers) {
+                           acc.add(new SimpleRegistration<>(key,
+                                                            handler,
+                                                            // TODO: FIX REMOVES!!!
+                                                            reg -> acc.remove(handler)));
+                         }
                        });
         return old.plus(key, TreePVector.from(acc));
       }

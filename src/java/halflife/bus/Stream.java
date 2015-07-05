@@ -39,7 +39,7 @@ public class Stream<V> {
   public <SRC extends Key, V1> MatchedStream<V1> map(KeyMissMatcher<SRC> keyMatcher,
                                                      Function<V, V1> mapper) {
     MatchedStream<V> downstream = new MatchedStream<>();
-    //firehose.miss(keyMatcher, downstream.subscribers(this));
+    firehose.miss(keyMatcher, downstream.subscribers(this));
     return downstream.map(mapper);
   }
 
