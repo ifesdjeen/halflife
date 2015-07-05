@@ -6,7 +6,12 @@ import halflife.bus.key.Key;
 import halflife.bus.registry.KeyMissMatcher;
 import org.junit.Test;
 
-public class MatchedStreamText extends AbstractFirehoseTest {
+import java.util.concurrent.TimeUnit;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+
+public class MatchedStreamTest extends AbstractFirehoseTest {
 
   @Test
   public void mapTest() throws InterruptedException {
@@ -24,12 +29,14 @@ public class MatchedStreamText extends AbstractFirehoseTest {
     }))
           .consume((i) -> {
             System.out.println(i);
+            res.set(i);
           });
 
 
     firehose.notify(Key.wrap("source"), 1);
-    //firehose.notify(Key.wrap("source"), 1);
 
-    //assertThat(res.get(1, TimeUnit.SECONDS), is(4));
+    assertThat(res.get(1, TimeUnit.SECONDS), is(4));
   }
+
+
 }
