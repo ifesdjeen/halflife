@@ -1,23 +1,24 @@
 package halflife.bus.registry;
 
 import halflife.bus.concurrent.Atom;
+import halflife.bus.fn.Reducer;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
 import org.pcollections.PVector;
 import org.pcollections.TreePVector;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
 
   private final Atom<PMap<Object, PVector<Registration<K, ? extends V>>>> lookupMap;
-  private final Map<KeyMissMatcher<K>, Function<K, List<? extends V>>>    keyMissMatchers;
+  private final Map<KeyMissMatcher<K>, Function<K, Map<K, ? extends V>>>  keyMissMatchers;
 
   public ConcurrentRegistry() {
     this.lookupMap = new Atom<>(HashTreePMap.empty());
@@ -25,7 +26,7 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
   }
 
   @Override
-  public void addKeyMissMatcher(KeyMissMatcher<K> matcher, Function<K, List<? extends V>> supplier) {
+  public void addKeyMissMatcher(KeyMissMatcher<K> matcher, Function<K, Map<K, ? extends V>> supplier) {
     this.keyMissMatchers.put(matcher, supplier);
   }
 
@@ -76,20 +77,45 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
       if (old.containsKey(key)) {
         return old;
       } else {
-        final List<Registration<K, ? extends V>> acc = new ArrayList<>();
-        keyMissMatchers.entrySet()
-                       .stream()
-                       .filter((m) -> m.getKey().test(key))
-                       .forEach((matcher) -> {
-                         List<? extends V> handlers = matcher.getValue().apply(key);
-                         for (V handler: handlers) {
-                           acc.add(new SimpleRegistration<>(key,
-                                                            handler,
-                                                            // TODO: FIX REMOVES!!!
-                                                            reg -> acc.remove(handler)));
-                         }
-                       });
-        return old.plus(key, TreePVector.from(acc));
+        // final List<Registration<K, ? extends V>> acc = new ArrayList<>();
+
+        List<Map.Entry<K, ? extends V>> a =
+          keyMissMatchers.entrySet()
+                         .stream()
+                         .filter((m) -> {
+                           return m.getKey().test(key);
+                         })
+                         .map((Map.Entry<KeyMissMatcher<K>, Function<K, Map<K, ? extends V>>> m) -> {
+                           return m.getValue();
+                         })
+                         .flatMap((Function<K, Map<K, ? extends V>> m) -> {
+                           return m.apply(key).entrySet().stream();
+                         })
+                         .collect(Collectors.toList());
+
+        return Reducer.reduce(
+          new BiFunction<PMap<Object, PVector<Registration<K, ? extends V>>>, Map.Entry<K, ? extends V>, PMap<Object, PVector<Registration<K, ? extends V>>>>() {
+            @Override
+            public PMap<Object, PVector<Registration<K, ? extends V>>> apply(
+              PMap<Object, PVector<Registration<K, ? extends V>>> acc,
+              Map.Entry<K, ? extends V> entry) {
+
+              Registration<K, V> reg = new SimpleRegistration<K, V>(entry.getKey(),
+                                                                    entry.getValue(),
+                                                                    null);
+
+              System.out.println(entry.getKey());
+              if(acc.containsKey(entry.getKey())) {
+                return acc.plus(entry.getKey(), acc.get(entry.getValue()).plus(reg));
+              } else {
+                return acc.plus(entry.getKey(), TreePVector.singleton(reg));
+              }
+
+            }
+          },
+          a,
+          old);
+
       }
     }).get(key);
   }
