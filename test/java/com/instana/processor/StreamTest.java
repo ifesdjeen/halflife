@@ -54,7 +54,7 @@ public class StreamTest extends AbstractFirehoseTest {
     intStream.map(Key.wrap("key1"), Key.wrap("key2"), (i) -> i + 1);
     intStream.consume(Key.wrap("key2"), res::set);
 
-    firehose.notify(Key.wrap("key1"), 1);
+    intStream.notify(Key.wrap("key1"), 1);
 
     assertThat(res.get(1, TimeUnit.SECONDS), is(2));
   }

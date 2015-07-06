@@ -3,7 +3,6 @@ package com.instana.processor;
 import halflife.bus.Stream;
 import halflife.bus.concurrent.AVar;
 import halflife.bus.key.Key;
-import halflife.bus.registry.KeyMissMatcher;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -18,17 +17,12 @@ public class MatchedStreamTest extends AbstractFirehoseTest {
     Stream<Integer> stream = new Stream<>(firehose);
     AVar<Integer> res = new AVar<>();
 
-    stream.map((KeyMissMatcher<Key>) key -> {
-      return key.equals(Key.wrap("source"));
-    }, (i) -> {
-      return i + 1;
-    }).map((i -> {
-      return i * 2;
-    })).consume((i) -> {
-      res.set(i);
-    });
+    stream.matched(key -> key.getPart(0).equals("source"))
+          .map(i -> i + 1)
+          .map(i -> i * 2)
+          .consume(res::set);
 
-    firehose.notify(Key.wrap("source"), 1);
+    firehose.notify(Key.wrap("source", "first"), 1);
 
     assertThat(res.get(1, TimeUnit.SECONDS), is(4));
   }

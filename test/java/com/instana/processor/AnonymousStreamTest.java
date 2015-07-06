@@ -17,7 +17,8 @@ public class AnonymousStreamTest extends AbstractFirehoseTest {
     Stream<Integer> stream = new Stream<>(firehose);
     AVar<Integer> res = new AVar<>();
 
-    stream.map(Key.wrap("source"), (i) -> i + 1)
+    stream.anonymous(Key.wrap("source"))
+          .map((i) -> i + 1)
           .map(i -> i * 2)
           .consume(res::set);
 
