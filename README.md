@@ -58,10 +58,10 @@ stream.anonymous(Key.wrap("source"))     // create an anonymous stream subscribe
       .consume(i -> System.out.println); // output every incoming value to stdout
 
 firehose.notify(Key.wrap("source"), 1); 
-;; => 2
+// => 2
 
 firehose.notify(Key.wrap("source"), 2);
-;; => 4
+// => 4
 ```
 
 The main difference between Java streams and HalfLife streams is the dispatch flexibility
@@ -85,10 +85,10 @@ stream.matched(key -> key.getPart(0).equals("source")) // create an anonymous st
       .consume(i -> System.out.println);               // output every incoming value to stdout
 
 firehose.notify(Key.wrap("source", "first"), 1);
-;; => 2
+// => 2
 
 firehose.notify(Key.wrap("source", "second"), 2);
-;; => 4
+// => 4
 ```
 
 As you can see, streams will be created per-entity, which opens op a lot of opportunities
