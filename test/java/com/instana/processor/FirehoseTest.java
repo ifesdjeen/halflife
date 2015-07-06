@@ -46,8 +46,8 @@ public class FirehoseTest extends AbstractFirehoseTest {
     AVar<Tuple2> val = new AVar<>();
 
     firehose.miss((k_) -> true,
-                  (k_) -> {
-                    return Collections.singletonList((key, value) -> {
+                  (k) -> {
+                    return Collections.singletonMap(k, (key, value) -> {
                       val.set(Tuple.of(key, value));
                     });
                   });

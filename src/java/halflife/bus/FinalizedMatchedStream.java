@@ -3,8 +3,7 @@ package halflife.bus;
 
 import halflife.bus.key.Key;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
 class FinalizedMatchedStream<V> {
@@ -15,17 +14,17 @@ class FinalizedMatchedStream<V> {
     this.suppliers = suppliers;
   }
 
-  public Function<Key, List<KeyedConsumer<? extends Key, V>>> subscribers(Stream stream) {
-    return new Function<Key, List<KeyedConsumer<? extends Key, V>>>() {
+  public Function<Key, Map<Key, KeyedConsumer<? extends Key, V>>> subscribers(Stream stream) {
+    return new Function<Key, Map<Key, KeyedConsumer<? extends Key, V>>>() {
       @Override
-      public List<KeyedConsumer<? extends Key, V>> apply(Key key) {
-        List<KeyedConsumer<? extends Key, V>> consumers = new LinkedList<>();
+      public Map<Key, KeyedConsumer<? extends Key, V>> apply(Key key) {
+        Map<Key, KeyedConsumer<? extends Key, V>> consumers = new LinkedHashMap<>();
 
         Key currentKey = key;
         for (MatchedStream.StreamSupplier supplier : suppliers) {
           Key nextKey = currentKey.derive();
           System.out.printf("Subscribing: %s %s %s\n", currentKey, nextKey, supplier);
-          consumers.add(supplier.get(currentKey, nextKey, stream));
+          consumers.put(currentKey, supplier.get(currentKey, nextKey, stream));
           currentKey = nextKey;
         }
         return consumers;

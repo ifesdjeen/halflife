@@ -26,7 +26,6 @@ public class MatchedStream<V> extends FinalizedMatchedStream<V> {
                                                                           DST dst,
                                                                           Stream<V1> stream) {
         return (key, value) -> {
-          //System.out.printf("K: %s V: %s DST: %s\n", key, value, mapper.apply(value));
           stream.notify(dst, mapper.apply(value));
         };
       }
