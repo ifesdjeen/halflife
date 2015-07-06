@@ -21,17 +21,12 @@ public class MatchedStreamTest extends AbstractFirehoseTest {
     stream.map((KeyMissMatcher<Key>) key -> {
       return key.equals(Key.wrap("source"));
     }, (i) -> {
-      System.out.printf("aaa: %d\n", i);
       return i + 1;
     }).map((i -> {
-      System.out.printf("bbb: %d\n", i);
       return i * 2;
-    }))
-          .consume((i) -> {
-            System.out.println(i);
-            res.set(i);
-          });
-
+    })).consume((i) -> {
+      res.set(i);
+    });
 
     firehose.notify(Key.wrap("source"), 1);
 
