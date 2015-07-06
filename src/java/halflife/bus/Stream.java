@@ -30,20 +30,6 @@ public class Stream<V> {
   }
 
   @SuppressWarnings(value = {"unchecked"})
-  public <SRC extends Key, V1> AnonymousStream<V1> map(SRC source,
-                                                       Function<V, V1> mapper) {
-    return new AnonymousStream(source, this).map(mapper);
-  }
-
-  @SuppressWarnings(value = {"unchecked"})
-  public <SRC extends Key, V1> MatchedStream<V1> map(KeyMissMatcher<SRC> keyMatcher,
-                                                     Function<V, V1> mapper) {
-    MatchedStream<V> downstream = new MatchedStream<>();
-    firehose.miss(keyMatcher, downstream.subscribers(this));
-    return downstream.map(mapper);
-  }
-
-  @SuppressWarnings(value = {"unchecked"})
   public <SRC extends Key> void consume(SRC source,
                                         Consumer<V> consumer) {
     firehose.on(source, new KeyedConsumer<SRC, V>() {
@@ -53,6 +39,20 @@ public class Stream<V> {
       }
     });
   }
+
+  @SuppressWarnings(value = {"unchecked"})
+  public <SRC extends Key> AnonymousStream<V> anonymous(SRC source) {
+    return new AnonymousStream<>(source, this);
+  }
+
+  @SuppressWarnings(value = {"unchecked"})
+  public <SRC extends Key> MatchedStream<V> matched(KeyMissMatcher<SRC> keyMatcher) {
+    MatchedStream<V> downstream = new MatchedStream<>();
+    firehose.miss(keyMatcher, downstream.subscribers(this));
+    return downstream;
+  }
+
+
 
   public <SRC extends Key> void notify(SRC src, V v) {
     this.firehose.notify(src, v);
