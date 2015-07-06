@@ -63,6 +63,10 @@ public class Key {
     return new Key(new Object[] { k } );
   }
 
+  public static Key wrap(Object... k) {
+    return new Key(k);
+  }
+
   @Override
   public String toString() {
     return "Key{" +
