@@ -10,7 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
@@ -72,45 +71,48 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
   @Override
   public List<Registration<K, ? extends V>> select(final K key) {
     return lookupMap.swap(old -> {
-      if (old.containsKey(key)) {
-        return old;
-      } else {
-        return keyMissMatchers.entrySet()
-                              .stream()
-                              .filter((m) -> {
-                                return m.getKey().test(key);
-                              })
-                              .map((Map.Entry<KeyMissMatcher<K>, Function<K, Map<K, ? extends V>>> m) -> {
-                                return m.getValue();
-                              })
-                              .flatMap((Function<K, Map<K, ? extends V>> m) -> {
-                                return m.apply(key).entrySet().stream();
-                              })
-                              .reduce(old,
-                                      new BiFunction<PMap<Object, PVector<Registration<K, ? extends V>>>, Map.Entry<K, ? extends V>, PMap<Object, PVector<Registration<K, ? extends V>>>>() {
-                                        @Override
-                                        public PMap<Object, PVector<Registration<K, ? extends V>>> apply(
-                                          PMap<Object, PVector<Registration<K, ? extends V>>> acc,
-                                          Map.Entry<K, ? extends V> entry) {
+                            if (old.containsKey(key)) {
+                              return old;
+                            } else {
+                              return keyMissMatchers.entrySet()
+                                                    .stream()
+                                                    .filter((m) -> {
+                                                      return m.getKey().test(key);
+                                                    })
+                                                    .map(
+                                                      (Map.Entry<KeyMissMatcher<K>, Function<K, Map<K, ? extends V>>> m) -> {
+                                                        return m.getValue();
+                                                      })
+                                                    .flatMap((Function<K, Map<K, ? extends V>> m) -> {
+                                                      return m.apply(key).entrySet().stream();
+                                                    })
+                                                    .reduce(old,
+                                                            (PMap<Object, PVector<Registration<K, ? extends V>>> acc,
+                                                             Map.Entry<K, ? extends V> entry) -> {
+                                                              Registration<K, V> reg = new SimpleRegistration<K, V>(
+                                                                entry.getKey(),
+                                                                entry.getValue(),
+                                                                // TODO: Fix removes!
+                                                                null);
 
-                                          Registration<K, V> reg = new SimpleRegistration<K, V>(entry.getKey(),
-                                                                                                entry.getValue(),
-                                                                                                // TODO: Fix removes!
-                                                                                                null);
-
-                                          if (acc.containsKey(entry.getKey())) {
-                                            return acc.plus(entry.getKey(), acc.get(entry.getValue()).plus(reg));
-                                          } else {
-                                            return acc.plus(entry.getKey(), TreePVector.singleton(reg));
-                                          }
-
-                                        }
-                                      },
-                                      PMap::plusAll);
+                                                              if (acc.containsKey(entry.getKey())) {
+                                                                return acc.plus(entry.getKey(),
+                                                                                acc.get(entry.getValue()).plus(reg));
+                                                              } else {
+                                                                return acc.plus(entry.getKey(),
+                                                                                TreePVector.singleton(reg));
+                                                              }
+                                                            },
+                                                            PMap::plusAll);
 
 
-      }
-    }).get(key);
+                            }
+                          }
+
+                         ).
+
+                      get(key);
+
   }
 
 
