@@ -25,7 +25,7 @@ public class Key {
   }
 
   public Object getPart(int index) {
-    if (index < parts.length - 1) {
+    if (index > parts.length - 1) {
       throw new RuntimeException(String.format("Can't get a part with index %d from %d long key",
                                                index,
                                                parts.length));
