@@ -4,6 +4,7 @@ import halflife.bus.Firehose;
 import halflife.bus.KeyedConsumer;
 import halflife.bus.Stream;
 import halflife.bus.concurrent.AVar;
+import halflife.bus.concurrent.Atom;
 import halflife.bus.key.Key;
 import halflife.bus.registry.ConcurrentRegistry;
 import halflife.bus.registry.DefaultingRegistry;
@@ -65,7 +66,7 @@ public class StreamTest extends AbstractFirehoseTest {
     Stream<Integer> intStream = new Stream<>(firehose);
 
     intStream.map(Key.wrap("key1"), Key.wrap("key2"), (i) -> i + 1);
-    intStream.map(Key.wrap("key2"), Key.wrap("key3"), (state) -> {
+    intStream.map(Key.wrap("key2"), Key.wrap("key3"), (Atom<Integer> state) -> {
                     return (i) -> {
                       return state.swap(old -> old + i);
                     };
