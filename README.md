@@ -82,7 +82,7 @@ lookup time.
 stream.matched(key -> key.getPart(0).equals("source")) // create an anonymous stream subscribed to "source"
       .map(i -> i + 1)                                 // add add 1 to each incoming value
       .map(i -> i * 2)                                 // multiply all incoming values by 2
-      .consume(i -> System.out.println);               // output every incoming value to stdout
+      .consume(i -> System.out.println(i));            // output every incoming value to stdout
 
 firehose.notify(Key.wrap("source", "first"), 1);
 // => 2
