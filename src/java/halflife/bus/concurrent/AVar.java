@@ -36,4 +36,12 @@ public class AVar<T> {
       throw new RuntimeException("AVar never retrieved a value");
     }
   }
+
+  @Override
+  public String toString() {
+    return "AVar{" +
+           "count=" + latch.getCount() +
+           ", ref=" + ref +
+           '}';
+  }
 }
