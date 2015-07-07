@@ -122,11 +122,11 @@ intStream.map(Key.wrap("key2"), Key.wrap("key3"), (Atom<Integer> state) -> { // 
 intStream.consume(Key.wrap("key3"), ());
 
 intStream.notify(Key.wrap("key1"), 1);
-;; => 2
+// => 2
 intStream.notify(Key.wrap("key1"), 2);
-;; => 5 
+// => 5 
 intStream.notify(Key.wrap("key1"), 3);
-;; => 9
+// => 9
 ```
 
 ## Persistent-collection based handlers
