@@ -109,6 +109,26 @@ will ensure lock-free atomic updates to the state.
 And since the state for entity are split, you're able to save and restore between
 restarts of your processing topologies.
 
+```java
+Stream<Integer> intStream = new Stream<>(firehose);
+
+intStream.map(Key.wrap("key1"), Key.wrap("key2"), (i) -> i + 1);             
+intStream.map(Key.wrap("key2"), Key.wrap("key3"), (Atom<Integer> state) -> { // Use a supplier to capture state in closure 
+                return (i) -> {                        // Return a function, just as a "regular" map would do
+                  return state.swap(old -> old + i);   // Access internal state
+                };
+              },
+              0);                                      // Pass the initial value for state
+intStream.consume(Key.wrap("key3"), ());
+
+intStream.notify(Key.wrap("key1"), 1);
+;; => 2
+intStream.notify(Key.wrap("key1"), 2);
+;; => 5 
+intStream.notify(Key.wrap("key1"), 3);
+;; => 9
+```
+
 ## Persistent-collection based handlers
 
 Window, batch and streaming grouping operations are saved in persistent collections.
