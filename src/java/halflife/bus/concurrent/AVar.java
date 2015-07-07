@@ -18,7 +18,7 @@ public class AVar<T> {
   }
 
   public void set(T obj) {
-    if (this.ref.compareAndSet(null, obj)) {
+    if (this.latch.getCount() > 0) {
       this.ref.set(obj);
       this.latch.countDown();
     } else {
