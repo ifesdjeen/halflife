@@ -52,10 +52,10 @@ create all the additional wiring between handlers in the Anonymous Stream automa
 Stream<Integer> stream = new Stream<>();
 AVar<Integer> res = new AVar<>();
 
-stream.anonymous(Key.wrap("source"))     // create an anonymous stream subscribed to "source"
-      .map(i -> i + 1)                   // add add 1 to each incoming value
-      .map(i -> i * 2)                   // multiply all incoming values by 2
-      .consume(i -> System.out.println); // output every incoming value to stdout
+stream.anonymous(Key.wrap("source"))       // create an anonymous stream subscribed to "source"
+      .map(i -> i + 1)                     // add add 1 to each incoming value
+      .map(i -> i * 2)                     // multiply all incoming values by 2
+      .consume(i -> System.out.println(i)); // output every incoming value to stdout
 
 firehose.notify(Key.wrap("source"), 1); 
 // => 2
