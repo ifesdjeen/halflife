@@ -13,7 +13,10 @@ public class AVar<T> {
   private final AtomicReference<T> ref;
 
   public AVar() {
-    this.latch = new CountDownLatch(1);
+    this(1);
+  }
+  public AVar(int i) {
+    this.latch = new CountDownLatch(i);
     this.ref = new AtomicReference<T>();
   }
 
