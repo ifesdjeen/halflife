@@ -40,9 +40,26 @@ public class Stream<V> {
   @SuppressWarnings(value = {"unchecked"})
   public <SRC extends Key, DST extends Key, V1, ST> Stream<V1> map(SRC source,
                                                                DST destination,
-                                                               StatefulSupplier<ST, Function<V, V1>> supplier,
+                                                               BiFunction<Atom<ST>, V, V1> fn,
                                                                ST init) {
-    Function<V, V1> mapper = supplier.get(stateProvider.makeAtom(init));
+    Atom<ST> st = stateProvider.makeAtom(source, init);
+
+    firehose.on(source, new KeyedConsumer<SRC, V>() {
+      @Override
+      public void accept(SRC key, V value) {
+        firehose.notify(destination, fn.apply(st, value));
+      }
+    });
+
+    return new Stream<>(firehose);
+  }
+
+  @SuppressWarnings(value = {"unchecked"})
+  public <SRC extends Key, DST extends Key, V1, ST> Stream<V1> map(SRC source,
+                                                                   DST destination,
+                                                                   StatefulSupplier<ST, Function<V, V1>> supplier,
+                                                                   ST init) {
+    Function<V, V1> mapper = supplier.get(stateProvider.makeAtom(source, init));
 
     firehose.on(source, new KeyedConsumer<SRC, V>() {
       @Override
