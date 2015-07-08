@@ -4,6 +4,6 @@ import halflife.bus.concurrent.Atom;
 
 public interface StateProvider {
 
-  public <T> Atom<T> makeAtom(T init);
+  public <SRC, T> Atom<T> makeAtom(SRC src, T init);
 
 }
