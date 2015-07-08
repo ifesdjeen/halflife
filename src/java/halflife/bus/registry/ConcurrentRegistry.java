@@ -108,7 +108,7 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
 
 
         }
-      }).get(key);
+      }).getOrDefault(key, TreePVector.empty());
 
   }
 
