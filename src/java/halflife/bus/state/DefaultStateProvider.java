@@ -5,8 +5,7 @@ import halflife.bus.concurrent.Atom;
 public class DefaultStateProvider implements StateProvider {
 
   @Override
-  public <T> Atom<T> makeAtom(T init) {
+  public <SRC, T> Atom<T> makeAtom(SRC src, T init) {
     return new Atom<>(init);
   }
-
 }
