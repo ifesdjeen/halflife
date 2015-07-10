@@ -11,10 +11,14 @@ import halflife.bus.registry.DefaultingRegistry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.pcollections.TreePVector;
 import reactor.core.Dispatcher;
 import reactor.core.dispatch.SynchronousDispatcher;
 import reactor.fn.Consumer;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -22,10 +26,10 @@ import static org.hamcrest.core.Is.is;
 
 public class StreamTest extends AbstractFirehoseTest {
 
-  private Dispatcher                                           dispatcher;
-  private DefaultingRegistry<Key, KeyedConsumer<Key, Integer>> consumerRegistry;
-  private Consumer<Throwable>                                  dispatchErrorHandler;
-  private Firehose<Key, Integer>                               firehose;
+  private   Dispatcher                                      dispatcher;
+  protected DefaultingRegistry<Object, KeyedConsumer<Object, Object>> consumerRegistry;
+  protected Consumer<Throwable>                             dispatchErrorHandler;
+  protected Firehose                                        firehose;
 
   @Before
   public void setup() {
@@ -36,9 +40,9 @@ public class StreamTest extends AbstractFirehoseTest {
       throwable.printStackTrace();
     };
 
-    this.firehose = new Firehose<>(dispatcher,
-                                   consumerRegistry,
-                                   dispatchErrorHandler);
+    this.firehose = new Firehose(dispatcher,
+                                 consumerRegistry,
+                                 dispatchErrorHandler);
   }
 
   @After
