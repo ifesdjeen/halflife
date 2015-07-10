@@ -115,4 +115,28 @@ public class StreamTest extends AbstractFirehoseTest {
     assertThat(res.get(1, TimeUnit.SECONDS), is(4));
   }
 
+  @Test
+  public void partitionTest() throws InterruptedException {
+    AVar<List<Integer>> res = new AVar<>();
+    Stream<Integer> intStream = new Stream<>(firehose);
+
+    intStream.partition(Key.wrap("key1"), Key.wrap("key2"), (i) -> {
+      // System.out.println(i);
+      return i.size() == 5;
+    });
+    intStream.consume(Key.wrap("key2"), (List<Integer> a) -> {
+      res.set(a);
+    });
+
+    intStream.notify(Key.wrap("key1"), 1);
+    intStream.notify(Key.wrap("key1"), 2);
+    intStream.notify(Key.wrap("key1"), 3);
+    intStream.notify(Key.wrap("key1"), 4);
+    intStream.notify(Key.wrap("key1"), 5);
+    intStream.notify(Key.wrap("key1"), 6);
+    intStream.notify(Key.wrap("key1"), 7);
+
+    assertThat(res.get(1, TimeUnit.SECONDS), is(TreePVector.from(Arrays.asList(1, 2, 3, 4, 5))));
+  }
+
 }
