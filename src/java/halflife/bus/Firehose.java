@@ -7,51 +7,56 @@ import reactor.core.Dispatcher;
 import reactor.core.support.Assert;
 import reactor.fn.Consumer;
 
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
 
-public class Firehose<K, V> {
+public class Firehose {
 
-  private final Dispatcher                                 dispatcher;
-  private final DefaultingRegistry<K, KeyedConsumer<K, V>> consumerRegistry;
-  private final Consumer<Throwable>                        dispatchErrorHandler;
+  private final Dispatcher                                      dispatcher;
+  private final DefaultingRegistry<Object, KeyedConsumer<Object, Object>> consumerRegistry;
+  private final Consumer<Throwable>                             dispatchErrorHandler;
 
   public Firehose(Dispatcher dispatcher,
-                  DefaultingRegistry<K, KeyedConsumer<K, V>> registry,
+                  DefaultingRegistry<Object, KeyedConsumer<Object, Object>> registry,
                   Consumer<Throwable> dispatchErrorHandler) {
     this.dispatcher = dispatcher;
     this.consumerRegistry = registry;
     this.dispatchErrorHandler = dispatchErrorHandler;
   }
 
-  public Firehose<K, V> notify(K key, V ev) {
+  @SuppressWarnings({"unchecked"})
+  public <K, V> Firehose notify(K key, V ev) {
     Assert.notNull(key, "Key cannot be null.");
     Assert.notNull(ev, "Event cannot be null.");
 
     dispatcher.dispatch(ev, t -> {
-      for (Registration<K, ? extends KeyedConsumer<K, V>> reg : consumerRegistry.select(key)) {
-        reg.getObject().accept(key, t);
+      for (Registration<Object, ? extends KeyedConsumer<?, ?>> reg : consumerRegistry.select(key)) {
+        KeyedConsumer<K,V> cast = (KeyedConsumer<K,V>) reg.getObject();
+        // TODO: add type checks
+        System.out.println(t);
+        cast.accept(key, t);
       }
     }, dispatchErrorHandler);
 
     return this;
   }
 
-  public Firehose<K, V> on(K key, KeyedConsumer<K, V> consumer) {
-    consumerRegistry.register(key, consumer);
+  public <K, V> Firehose on(K key, KeyedConsumer<K, V> consumer) {
+    consumerRegistry.register(key, (KeyedConsumer<Object, Object>) consumer);
     return this;
   }
 
-  public Firehose<K, V> on(K key, SimpleConsumer<V> consumer) {
-    consumerRegistry.register(key, (k_, value) -> consumer.accept(value));
+  @SuppressWarnings({"unchecked"})
+  public <K, V> Firehose on(K key, SimpleConsumer<V> consumer) {
+    consumerRegistry.register(key, (k_, value) -> consumer.accept((V) value));
     return this;
   }
 
-  public Firehose<K, V> miss(KeyMissMatcher<K> matcher,
-                             Function<K, Map<K, ? extends KeyedConsumer<K, V>>> supplier) {
-    consumerRegistry.addKeyMissMatcher(matcher, supplier);
+  @SuppressWarnings({"unchecked"})
+  public <K, V> Firehose miss(KeyMissMatcher<? extends K> matcher,
+                              Function<K, Map<K, ? extends KeyedConsumer<K, V>>> supplier) {
+    consumerRegistry.addKeyMissMatcher((KeyMissMatcher) matcher, (Function)supplier);
     return this;
   }
 }
