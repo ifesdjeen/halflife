@@ -1,7 +1,9 @@
 package com.instana.processor;
 
+import halflife.bus.KeyedConsumer;
 import halflife.bus.concurrent.AVar;
 import halflife.bus.key.Key;
+import halflife.bus.registry.KeyMissMatcher;
 import org.junit.Test;
 import reactor.fn.tuple.Tuple;
 import reactor.fn.tuple.Tuple2;
@@ -45,9 +47,10 @@ public class FirehoseTest extends AbstractFirehoseTest {
   public void keyMissTest() throws InterruptedException {
     AVar<Tuple2> val = new AVar<>();
 
-    firehose.miss((k_) -> true,
+    firehose.miss((KeyMissMatcher<? extends Key>)(k_) -> true,
                   (k) -> {
-                    return Collections.singletonMap(k, (key, value) -> {
+                    return Collections.singletonMap(k,
+                                                    (KeyedConsumer<Key, Integer>) (key, value) -> {
                       val.set(Tuple.of(key, value));
                     });
                   });
