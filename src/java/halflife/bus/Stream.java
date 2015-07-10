@@ -6,7 +6,10 @@ import halflife.bus.registry.KeyMissMatcher;
 import halflife.bus.state.DefaultStateProvider;
 import halflife.bus.state.StateProvider;
 import halflife.bus.state.StatefulSupplier;
+import org.pcollections.PVector;
+import org.pcollections.TreePVector;
 
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -106,11 +109,11 @@ public class Stream<V> {
   }
 
   @SuppressWarnings(value = {"unchecked"})
-  public <SRC extends Key> void consume(SRC source,
-                                        Consumer<V> consumer) {
-    firehose.on(source, new KeyedConsumer<SRC, V>() {
+  public <SRC extends Key, V1> void consume(SRC source,
+                                            Consumer<V1> consumer) {
+    firehose.on(source, new KeyedConsumer<SRC, V1>() {
       @Override
-      public void accept(SRC key_, V value) {
+      public void accept(SRC key_, V1 value) {
         consumer.accept(value);
       }
     });
