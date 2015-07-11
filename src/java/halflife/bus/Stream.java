@@ -2,6 +2,7 @@ package halflife.bus;
 
 import halflife.bus.concurrent.Atom;
 import halflife.bus.key.Key;
+import halflife.bus.operation.PartitionOperation;
 import halflife.bus.registry.KeyMissMatcher;
 import halflife.bus.state.DefaultStateProvider;
 import halflife.bus.state.StateProvider;
@@ -25,21 +26,16 @@ public class Stream<V> {
     this.stateProvider = new DefaultStateProvider();
   }
 
+  @SuppressWarnings(value = {"unchecked"})
   public <SRC extends Key, DST extends Key> Stream<List<V>> partition(SRC source,
                                                                       DST destination,
                                                                       Predicate<List<V>> emit) {
     Atom<PVector<V>> buffer = stateProvider.makeAtom(source, TreePVector.empty());
 
-    firehose.on(source, new KeyedConsumer<SRC, V>() {
-      @Override
-      public void accept(SRC key, V value) {
-        PVector<V> newv = buffer.swap((old) -> old.plus(value));
-        if (emit.test(newv)) {
-          PVector<V> downstream = buffer.swapReturnOld((old) -> TreePVector.empty());
-          firehose.notify(destination, downstream);
-        }
-      }
-    });
+    firehose.on(source, new PartitionOperation<SRC, DST, V>(firehose,
+                                                            buffer,
+                                                            emit,
+                                                            destination));
 
     return new Stream<>(firehose);
   }
