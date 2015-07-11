@@ -1,6 +1,10 @@
 package halflife.bus.concurrent;
 
+import reactor.fn.tuple.Tuple2;
+
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * Generic Atom
@@ -17,22 +21,33 @@ public class  Atom<T> {
     return ref.get();
   }
 
-  public T swap(SwapFn<T> swapOp) {
+  // TODO: SwapFn is just an unary operator
+  public T swap(UnaryOperator<T> swapOp) {
     for (;;) {
       T old = ref.get();
-      T newv = swapOp.swap(old);
+      T newv = swapOp.apply(old);
       if(ref.compareAndSet(old, newv)) {
         return newv;
       }
     }
   }
 
-  public T swapReturnOld(SwapFn<T> swapOp) {
+  public T swapReturnOld(UnaryOperator<T> swapOp) {
     for (;;) {
       T old = ref.get();
-      T newv = swapOp.swap(old);
+      T newv = swapOp.apply(old);
       if(ref.compareAndSet(old, newv)) {
         return old;
+      }
+    }
+  }
+
+  public <O> O swapReturnOther(Function<T, Tuple2<T,O>> swapOp) {
+    for (;;) {
+      T old = ref.get();
+      Tuple2<T, O> newvtuple = swapOp.apply(old);
+      if(ref.compareAndSet(old, newvtuple.getT1())) {
+        return newvtuple.getT2();
       }
     }
   }
