@@ -5,7 +5,7 @@ Halflife is an evolvement and extension of our recent works and ideas on
 
 Main features include:
 
-  * Named stream topologies
+  * [Named stream topologies](https://github.com/ifesdjeen/halflife#named-stream-topologies)
   * Anonymous stream topologies
   * Lazy topologies
   * Matched Lazy Streams
