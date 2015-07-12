@@ -11,6 +11,7 @@ import org.pcollections.PVector;
 import org.pcollections.TreePVector;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -127,7 +128,14 @@ public class Stream<V> {
     return downstream;
   }
 
-
+  @SuppressWarnings(value = {"unchecked"})
+  public <SRC extends Key> Channel<V> channel() {
+    Key k = new Key(new Object[] { UUID.randomUUID() });
+    AnonymousStream<V> anonymousStream = new AnonymousStream<>(k,
+                                                               this);
+    return new Channel<V>(anonymousStream,
+                          stateProvider.makeAtom(k, TreePVector.empty()));
+  }
 
   public <SRC extends Key> void notify(SRC src, V v) {
     this.firehose.notify(src, v);
