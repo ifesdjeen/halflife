@@ -8,6 +8,7 @@ import reactor.fn.tuple.Tuple;
 import reactor.fn.tuple.Tuple2;
 
 import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.core.Is.is;
@@ -77,5 +78,21 @@ public class FirehoseTest extends AbstractFirehoseTest {
 
     firehose.notify(Key.wrap("key1"), 1);
     assertThat(val.get(10, TimeUnit.MILLISECONDS), is(Tuple.of(Key.wrap("key1"), 1)));
+  }
+
+  @Test
+  public void unsubscribeTest() throws InterruptedException {
+    Key k = Key.wrap("key1");
+    final CountDownLatch latch = new CountDownLatch(2);
+
+    firehose.on(k, (i) -> {
+      latch.countDown();
+    });
+
+    firehose.notify(k, 1);
+    firehose.unregister(k);
+    firehose.notify(k, 1);
+
+    assertThat(latch.getCount(), is(1L));
   }
 }
