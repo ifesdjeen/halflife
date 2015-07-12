@@ -1,5 +1,7 @@
 package halflife.bus;
 
+import halflife.bus.channel.ConsumingChannel;
+import halflife.bus.channel.PublishingChannel;
 import halflife.bus.concurrent.Atom;
 import org.pcollections.PVector;
 import reactor.fn.tuple.Tuple;
@@ -8,7 +10,7 @@ import reactor.fn.tuple.Tuple2;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-public class Channel<T> {
+public class Channel<T> implements PublishingChannel<T>, ConsumingChannel<T> {
 
   private final AnonymousStream<T> stream;
   private final Atom<PVector<T>>   state;
@@ -57,5 +59,13 @@ public class Channel<T> {
 
   public void tell(T item) {
     stream.notify(item);
+  }
+
+  public PublishingChannel<T> publishingChannel() {
+    return this;
+  }
+
+  public ConsumingChannel<T> consumingChannel() {
+    return this;
   }
 }
