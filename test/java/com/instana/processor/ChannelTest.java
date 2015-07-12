@@ -2,6 +2,8 @@ package com.instana.processor;
 
 import halflife.bus.Channel;
 import halflife.bus.Stream;
+import halflife.bus.channel.ConsumingChannel;
+import halflife.bus.channel.PublishingChannel;
 import halflife.bus.concurrent.AVar;
 import org.junit.Assert;
 import org.junit.Test;
@@ -61,5 +63,24 @@ public class ChannelTest extends AbstractFirehoseTest {
       expectedException = e;
     }
     assertTrue(expectedException != null);
+  }
+
+  @Test
+  public void consumingPublishingChannelsTest() throws InterruptedException {
+    Stream<Integer> stream = new Stream<>(firehose);
+    Channel<Integer> chan = stream.channel();
+
+    PublishingChannel<Integer> publishingChannel = chan.publishingChannel();
+    ConsumingChannel<Integer> consumingChannel = chan.consumingChannel();
+
+    publishingChannel.tell(1);
+    publishingChannel.tell(2);
+
+    assertThat(consumingChannel.get(), is(1));
+    assertThat(consumingChannel.get(), is(2));
+    assertTrue(consumingChannel.get() == null);
+
+    chan.tell(3);
+    assertThat(consumingChannel.get(), is(3));
   }
 }
