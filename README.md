@@ -6,17 +6,48 @@ Halflife is an evolvement and extension of our recent works and ideas on
 Main features include:
 
   * [Named stream topologies](https://github.com/ifesdjeen/halflife#named-stream-topologies)
-  * Anonymous stream topologies
-  * Lazy topologies
-  * Matched Lazy Streams
-  * Uni- and Bi- directional Channels 
+  * [Anonymous stream topologies](https://github.com/ifesdjeen/halflife#anonymous-stream-topologies)
+  * [Matched Lazy Streams](https://github.com/ifesdjeen/halflife#matched-lazy-streams)
+  * [Uni- and Bi- directional Channels](https://github.com/ifesdjeen/halflife#uni--and-bi--directional-channels)
   * Independent Per-Entity Streams
   * Atomic State operations
   * Persistent-collection based handlers
   * Multiple dispatch strategies (use same topology to dispatch on Disruptor, ThreadPool or anything else)
   * Integration with Databases for persisting Stream information between restarts
   * Integration with Message Queues for distribution and fault-tolerance
-  
+
+## Terminology
+
+`Stream` is a term coming from Reactive Programming. Stream looks a little like a collection
+from the consumer perspective, with the only difference that if collection is a ready set
+of events, stream is an infinite collection. If you do `map` operation on the stream,
+`map` function will see each and every element coming to the stream.
+
+`Publisher` (`generator` or `producer` in some terminologies) is a function or entity
+that publishes items to the stream. `Consumer` (or `listener`, in some terminologies) is
+a function that is subscribed to the stream, and will be asyncronously getting items that
+the `publisher` publishes to the stream.
+
+In many cases, function can simultaneously be a `consumer` and a `producer`. For example,
+`map` is consumed to the events coming to the stream, and publishes modified events
+back to the stream.
+
+`Topology` is a stream with a chain of publishers and producers attached to it. For example,
+you can have a stream that `maps` items, incrementing each one of them, then a `filter`
+that picks up only even incremented numbers. Of course, in real life applications
+topologies are much more complex.
+
+`Upstream` / `downstream` are used to describe the order of functions in your topologies.
+For example, if you have a stream that `maps` items, incrementing each one of them, it
+serves as an upstream for the following `filter` function, that consumes events from it.
+`Filter` serves as a `downstream` in this example.
+
+`Named` and `anonymous` streams are just the means of explaning the wiring between
+the parts of the topology. If each item within the `named` stream has to know where to
+subscribe and where to publish the resulting events, in `anonymous` topologies the
+connection between stream parts is implicit, e.g. parts are simply wired by the
+systems with unique randomly generated keys.
+
 And a little more description about each one of them:
 
 ## Named stream topologies
