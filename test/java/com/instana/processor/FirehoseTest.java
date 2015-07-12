@@ -1,5 +1,6 @@
 package com.instana.processor;
 
+import halflife.bus.KeyedConsumer;
 import halflife.bus.concurrent.AVar;
 import halflife.bus.key.Key;
 import org.junit.Test;
@@ -21,6 +22,28 @@ public class FirehoseTest extends AbstractFirehoseTest {
 
     firehose.on(Key.wrap("key1"), val::set);
     firehose.on(Key.wrap("key2"), val2::set);
+
+    firehose.notify(Key.wrap("key1"), 1);
+    firehose.notify(Key.wrap("key2"), 2);
+
+    assertThat(val.get(10, TimeUnit.MILLISECONDS), is(1));
+    assertThat(val2.get(10, TimeUnit.MILLISECONDS), is(2));
+  }
+
+  @Test
+  public void doubleSubscriptionTest() throws InterruptedException {
+    AVar<Integer> val = new AVar<>();
+    AVar<Integer> val2 = new AVar<>();
+
+    firehose.on(Key.wrap("key1"), (key, value) -> {
+      return;
+    });
+    firehose.on(Key.wrap("key1"), val::set);
+
+    firehose.on(Key.wrap("key2"), val2::set);
+    firehose.on(Key.wrap("key2"), (key, value) -> {
+      return;
+    });
 
     firehose.notify(Key.wrap("key1"), 1);
     firehose.notify(Key.wrap("key2"), 2);
