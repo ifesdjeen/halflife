@@ -30,4 +30,8 @@ public class AnonymousStream<V> {
     stream.consume(upstream, consumer);
   }
 
+  @SuppressWarnings(value = {"unchecked"})
+  public <SRC extends Key> void notify(V v) {
+    this.stream.notify(upstream, v);
+  }
 }
