@@ -5,6 +5,7 @@ import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
 import org.pcollections.PVector;
 import org.pcollections.TreePVector;
+import reactor.fn.tuple.Tuple;
 
 import java.util.Iterator;
 import java.util.List;
@@ -59,13 +60,12 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
 
   @Override
   public boolean unregister(K key) {
-    //    boolean res = lookupMap.containsKey(key);
-    //
-    //    if (res) {
-    //      lookupMap.remove(key);
-    //    }
-    // TODO: FIXME
-    return false;
+    return lookupMap.swapReturnOther((map) -> {
+      PMap<Object, PVector<Registration<K, ? extends V>>> newv = map.minus(key);
+
+      return Tuple.of(newv,
+                      map.containsKey(key));
+    });
   }
 
   @Override

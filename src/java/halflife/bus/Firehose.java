@@ -54,4 +54,8 @@ public class Firehose<K, V> {
     consumerRegistry.addKeyMissMatcher(matcher, supplier);
     return this;
   }
+
+  public boolean unregister(K key) {
+    return consumerRegistry.unregister(key);
+  }
 }
