@@ -143,6 +143,63 @@ the queue-like object. This feature is particularly useful in scenarios when
 you don't need to have neither subscription nor publish hey, and you need
 only to have async or sync uni- or bi- directional communication.
 
+```java
+Stream<Integer> stream = new Stream<>(firehose);
+Channel<Integer> chan = stream.channel();
+
+chan.tell(1);
+chan.tell(2);
+
+chan.get();
+// => 1
+
+chan.get();
+// => 2
+
+chan.get();
+// => null
+```
+
+Channels can be consumed from streams, too. It is although important to remember
+that in order to avoid unnecessary state accumulation Channels can either be
+used as a stream or as a channel:
+
+```java
+Stream<Integer> stream = new Stream<>(firehose);
+Channel<Integer> chan = stream.channel();
+
+chan.stream()
+    .map(i -> i + 1)
+    .consume(i -> System.out.println(i));
+
+chan.tell(1);
+// => 2
+
+chan.get();
+// throws RuntimeException, since channel is already drained by the stream
+```
+
+Channels can also be split to publishing and consuming channels for type safety,
+if you need to ensure that consuming part can't publish messages and publishing
+part can't accidentally consume them:
+
+```java
+Stream<Integer> stream = new Stream<>(firehose);
+Channel<Integer> chan = stream.channel();
+
+PublishingChannel<Integer> publishingChannel = chan.publishingChannel();
+ConsumingChannel<Integer> consumingChannel = chan.consumingChannel();
+
+publishingChannel.tell(1);
+publishingChannel.tell(2);
+
+consumingChannel.get();
+// => 1
+
+consumingChannel.get();
+// => 2
+```
+
 # License
 
 Copyright © 2014 Alex Petrov
