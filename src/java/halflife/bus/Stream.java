@@ -3,6 +3,7 @@ package halflife.bus;
 import halflife.bus.concurrent.Atom;
 import halflife.bus.key.Key;
 import halflife.bus.operation.PartitionOperation;
+import halflife.bus.operation.SlidingWindowOperation;
 import halflife.bus.registry.KeyMissMatcher;
 import halflife.bus.state.DefaultStateProvider;
 import halflife.bus.state.StateProvider;
@@ -12,10 +13,7 @@ import org.pcollections.TreePVector;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 public class Stream<V> {
 
@@ -37,6 +35,20 @@ public class Stream<V> {
                                                             buffer,
                                                             emit,
                                                             destination));
+
+    return new Stream<>(firehose);
+  }
+
+  @SuppressWarnings(value = {"unchecked"})
+  public <SRC extends Key, DST extends Key> Stream<List<V>> slide(SRC source,
+                                                                  DST destination,
+                                                                  UnaryOperator<List<V>> drop) {
+    Atom<PVector<V>> buffer = stateProvider.makeAtom(source, TreePVector.empty());
+
+    firehose.on(source, new SlidingWindowOperation<SRC, DST, V>(firehose,
+                                                                buffer,
+                                                                drop,
+                                                                destination));
 
     return new Stream<>(firehose);
   }
