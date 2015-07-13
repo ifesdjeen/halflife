@@ -143,4 +143,26 @@ public class StreamTest extends AbstractFirehoseTest {
     assertThat(res.get(1, TimeUnit.SECONDS), is(TreePVector.from(Arrays.asList(1, 2, 3, 4, 5))));
   }
 
+  @Test
+  public void slideTest() throws InterruptedException {
+    AVar<List<Integer>> res = new AVar<>(6);
+    Stream<Integer> intStream = new Stream<>(firehose);
+
+    intStream.slide(Key.wrap("key1"), Key.wrap("key2"), (i) -> {
+      return i.subList(i.size() > 5 ? i.size() - 5 : 0,
+                       i.size());
+    });
+    intStream.consume(Key.wrap("key2"), (List<Integer> a) -> {
+      res.set(a);
+    });
+
+    intStream.notify(Key.wrap("key1"), 1);
+    intStream.notify(Key.wrap("key1"), 2);
+    intStream.notify(Key.wrap("key1"), 3);
+    intStream.notify(Key.wrap("key1"), 4);
+    intStream.notify(Key.wrap("key1"), 5);
+    intStream.notify(Key.wrap("key1"), 6);
+    assertThat(res.get(1, TimeUnit.SECONDS), is(TreePVector.from(Arrays.asList(2,3,4,5,6))));
+  }
+
 }
