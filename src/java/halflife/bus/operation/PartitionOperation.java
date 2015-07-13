@@ -31,8 +31,8 @@ public class PartitionOperation<SRC, DST, V> implements KeyedConsumer<SRC, V> {
   public void accept(SRC key, V value) {
     PVector<V> newv = buffer.swap((old) -> old.plus(value));
     if (emit.test(newv)) {
-      PVector<V> downstream = buffer.swapReturnOld((old) -> TreePVector.empty());
-      firehose.notify(destination, downstream);
+      PVector<V> downstreamValue = buffer.swapReturnOld((old) -> TreePVector.empty());
+      firehose.notify(destination, downstreamValue);
     }
   }
 }
