@@ -6,6 +6,7 @@ import halflife.bus.concurrent.AVar;
 import halflife.bus.key.Key;
 import org.junit.Test;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -44,6 +45,25 @@ public class AnonymousStreamTest extends AbstractFirehoseTest {
     firehose.notify(Key.wrap("source"), 1);
 
     assertThat(res.get(1, TimeUnit.SECONDS), is(4));
+  }
+
+  @Test
+  public void testUnregister() throws InterruptedException {
+    Stream<Integer> stream = new Stream<>(firehose);
+    CountDownLatch latch = new CountDownLatch(2);
+
+    AnonymousStream<Integer> s = stream.anonymous(Key.wrap("source"));
+
+    s.map((i) -> i + 1)
+     .map(i -> i * 2)
+     .consume(i -> latch.countDown());
+
+    firehose.notify(Key.wrap("source"), 1);
+    s.unregister();
+    firehose.notify(Key.wrap("source"), 1);
+
+    assertThat(latch.getCount(), is(1L));
+    assertThat(firehose.getConsumerRegistry().stream().count(), is(0L));
   }
 
 }
