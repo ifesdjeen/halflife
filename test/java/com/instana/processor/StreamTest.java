@@ -16,10 +16,11 @@ import reactor.core.Dispatcher;
 import reactor.core.dispatch.SynchronousDispatcher;
 import reactor.fn.Consumer;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -165,4 +166,42 @@ public class StreamTest extends AbstractFirehoseTest {
     assertThat(res.get(1, TimeUnit.SECONDS), is(TreePVector.from(Arrays.asList(2,3,4,5,6))));
   }
 
+  @Test
+  public void testUnregister() throws InterruptedException {
+    Key k1 = Key.wrap("key1");
+    Key k2 = Key.wrap("key2");
+
+    CountDownLatch latch = new CountDownLatch(1);
+    Stream<Integer> intStream = new Stream<>(firehose);
+
+    intStream.map(k1, k2, (i) -> i + 1);
+    intStream.consume(k2, (i) -> latch.countDown());
+
+    intStream.unregister(k2);
+    intStream.notify(k1, 1);
+
+    assertThat(latch.getCount(), is(1L));
+  }
+
+  @Test
+  public void testUnregisterAll() throws InterruptedException {
+    Key k1 = Key.wrap("key1");
+    Key k2 = Key.wrap("key2");
+
+    CountDownLatch latch = new CountDownLatch(2);
+    Stream<Integer> intStream = new Stream<>(firehose);
+
+    intStream.map(k1, k2, (i) -> {
+      latch.countDown();
+      return i + 1;
+    });
+
+    intStream.consume(k2, (i) -> latch.countDown());
+
+    intStream.unregister((Predicate<Key>) key -> true);
+    intStream.notify(k1, 1);
+
+    assertThat(latch.getCount(), is(2L));
+  }
 }
+
