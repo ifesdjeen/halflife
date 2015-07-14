@@ -21,7 +21,7 @@ public class Key {
     Object[] newKey = new Object[parts.length + 1];
     System.arraycopy(parts, 0, newKey, 0, parts.length);
     newKey[parts.length] = UUID.randomUUID();
-    return new Key(newKey);
+    return new Key(newKey, true);
   }
 
   public Object getPart(int index) {
@@ -32,6 +32,19 @@ public class Key {
     } else {
       return parts[index];
     }
+  }
+
+  public boolean isDerivedFrom(Key other) {
+    if (!isDerived || (this.parts.length <= other.parts.length)) {
+      return false;
+    }
+
+    for(int i = 0; i < other.parts.length; i++) {
+      if (!(other.parts[i].equals(this.parts[i]))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public boolean isDerived() {
