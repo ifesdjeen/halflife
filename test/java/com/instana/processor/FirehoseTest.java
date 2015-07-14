@@ -95,4 +95,35 @@ public class FirehoseTest extends AbstractFirehoseTest {
 
     assertThat(latch.getCount(), is(1L));
   }
+
+  @Test
+  public void unsubscribeAllTest() throws InterruptedException {
+    Key k1 = Key.wrap("key1");
+    Key k2 = Key.wrap("key2");
+    Key k3 = Key.wrap("_key3");
+
+    final CountDownLatch latch = new CountDownLatch(2);
+    final CountDownLatch latch2 = new CountDownLatch(1);
+
+    firehose.on(k1, (i) -> {
+      latch.countDown();
+    });
+
+    firehose.on(k2, (i) -> {
+      latch.countDown();
+    });
+
+    firehose.on(k3, (i) -> {
+      latch2.countDown();
+    });
+
+    firehose.unregister(k -> ((String)k.getPart(0)).startsWith("key"));
+    firehose.notify(k1, 1);
+    firehose.notify(k2, 1);
+    firehose.notify(k3, 1);
+
+
+    assertThat(latch2.getCount(), is(0L));
+    assertThat(latch.getCount(), is(2L));
+  }
 }
