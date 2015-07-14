@@ -7,16 +7,20 @@ import org.pcollections.PVector;
 import org.pcollections.TreePVector;
 import reactor.fn.tuple.Tuple;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
 
-  private final Atom<PMap<Object, PVector<Registration<K, ? extends V>>>> lookupMap;
-  private final Map<KeyMissMatcher<K>, Function<K, Map<K, ? extends V>>>  keyMissMatchers;
+  private final Atom<PMap<K, PVector<Registration<K, ? extends V>>>>     lookupMap;
+  private final Map<KeyMissMatcher<K>, Function<K, Map<K, ? extends V>>> keyMissMatchers;
 
   public ConcurrentRegistry() {
     this.lookupMap = new Atom<>(HashTreePMap.empty());
@@ -61,10 +65,25 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
   @Override
   public boolean unregister(K key) {
     return lookupMap.swapReturnOther((map) -> {
-      PMap<Object, PVector<Registration<K, ? extends V>>> newv = map.minus(key);
+      PMap<K, PVector<Registration<K, ? extends V>>> newv = map.minus(key);
 
       return Tuple.of(newv,
                       map.containsKey(key));
+    });
+  }
+
+  @Override
+  public boolean unregister(Predicate<K> pred) {
+    return lookupMap.swapReturnOther((map) -> {
+      List<K> unsubscribeKys = map.keySet()
+                                  .stream()
+                                  .filter(pred)
+                                  .collect(Collectors.toList());
+
+      PMap<K, PVector<Registration<K, ? extends V>>> newv = map.minusAll(unsubscribeKys);
+
+      return Tuple.of(newv,
+                      !unsubscribeKys.isEmpty());
     });
   }
 
@@ -88,7 +107,7 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
                                   return m.apply(key).entrySet().stream();
                                 })
                                 .reduce(old,
-                                        (PMap<Object, PVector<Registration<K, ? extends V>>> acc,
+                                        (PMap<K, PVector<Registration<K, ? extends V>>> acc,
                                          Map.Entry<K, ? extends V> entry) -> {
                                           Registration<K, V> reg = new SimpleRegistration<K, V>(
                                             entry.getKey(),
@@ -115,13 +134,20 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
 
   @Override
   public void clear() {
+    // TODO: FIXME
     //    this.lookupMap.clear();
     //    this.keyMissMatchers.clear();
   }
 
 
   @Override
-  public Iterator<Registration<K, V>> iterator() {
-    return null;
+  public Iterator<Registration<K, ? extends V>> iterator() {
+    return this.stream().iterator();
+  }
+
+  public Stream<Registration<K, ? extends V>> stream() {
+    return this.lookupMap.deref().values().stream().flatMap(i -> i.stream());
+
+
   }
 }
