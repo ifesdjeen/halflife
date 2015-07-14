@@ -3,6 +3,7 @@ package halflife.bus;
 import halflife.bus.registry.DefaultingRegistry;
 import halflife.bus.registry.KeyMissMatcher;
 import halflife.bus.registry.Registration;
+import halflife.bus.registry.Registry;
 import reactor.core.Dispatcher;
 import reactor.core.support.Assert;
 import reactor.fn.Consumer;
@@ -10,6 +11,7 @@ import reactor.fn.Consumer;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 
 public class Firehose<K, V> {
@@ -57,5 +59,13 @@ public class Firehose<K, V> {
 
   public boolean unregister(K key) {
     return consumerRegistry.unregister(key);
+  }
+
+  public boolean unregister(Predicate<K> pred) {
+    return consumerRegistry.unregister(pred);
+  }
+
+  public Registry<K, KeyedConsumer<K, V>> getConsumerRegistry() {
+    return this.consumerRegistry;
   }
 }

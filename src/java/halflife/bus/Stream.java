@@ -141,7 +141,7 @@ public class Stream<V> {
   }
 
   @SuppressWarnings(value = {"unchecked"})
-  public <SRC extends Key> Channel<V> channel() {
+  public Channel<V> channel() {
     Key k = new Key(new Object[] { UUID.randomUUID() });
     AnonymousStream<V> anonymousStream = new AnonymousStream<>(k,
                                                                this);
@@ -151,6 +151,14 @@ public class Stream<V> {
 
   public <SRC extends Key> void notify(SRC src, V v) {
     this.firehose.notify(src, v);
+  }
+
+  public <SRC extends Key> void unregister(SRC src) {
+    this.firehose.unregister(src);
+  }
+
+  public <SRC extends Key> void unregister(Predicate<SRC> pred) {
+    this.firehose.unregister(pred);
   }
 
 }
