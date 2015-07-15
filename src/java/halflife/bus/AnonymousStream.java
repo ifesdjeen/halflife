@@ -2,9 +2,11 @@ package halflife.bus;
 
 import halflife.bus.key.Key;
 
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 public class AnonymousStream<V> {
 
@@ -33,6 +35,32 @@ public class AnonymousStream<V> {
     return new AnonymousStream<>(rootKey, downstream, stream);
   }
 
+  @SuppressWarnings(value = {"unchecked"})
+  public AnonymousStream<V> filter(Predicate<V> predicate) {
+    Key downstream = upstream.derive();
+
+    stream.filter(upstream, downstream, predicate);
+
+    return new AnonymousStream<>(rootKey, downstream, stream);
+  }
+
+  @SuppressWarnings(value = {"unchecked"})
+  public AnonymousStream<List<V>> slide(UnaryOperator<List<V>> drop) {
+    Key downstream = upstream.derive();
+
+    stream.slide(upstream, downstream, drop);
+
+    return new AnonymousStream<>(rootKey, downstream, stream);
+  }
+
+  @SuppressWarnings(value = {"unchecked"})
+  public AnonymousStream<List<V>> partition(Predicate<List<V>> emit) {
+    Key downstream = upstream.derive();
+
+    stream.partition(upstream, downstream, emit);
+
+    return new AnonymousStream<>(rootKey, downstream, stream);
+  }
 
   @SuppressWarnings(value = {"unchecked"})
   public void consume(Consumer<V> consumer) {
