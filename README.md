@@ -16,6 +16,34 @@ Main features include:
   * Integration with Databases for persisting Stream information between restarts
   * Integration with Message Queues for distribution and fault-tolerance
 
+## Why Halflife?
+
+Current state-of-art Stream Processing solutions bring enormous development and maintenance
+overhead and can mostly serve as a replacement for Extract-Load-Transform / Batch
+Processing jobs (think Hadoop).
+
+Halflife is a lightweight Stream Processing system, which was developed with performance,
+development and support simplicity in mind. You can scale it on one or many machines without
+any trouble, building complex processing topologies that are as easy to test as normal
+operations on `Lists`. After all, Streams are nothing but eternal sequences.
+
+Halflife can be also used to make asynchronous/concurrent programs simpler, easier to
+maintain and construct. For example, you could use __Channels__ with __Matched Streams__ in
+order to build a lightweight websocket server implementation. Another example is
+asynchronous handlers in your HTTP server, which would work with any driver, no matter
+whether it offers asynchronous API or no. Other examples include IoT, Machine Learning,
+Business Analytics and more.
+
+The problem with Machine Learning on Streams is that most of algorithms assume some kind
+of state: for example, Classification assumes that trained model is available. Having
+this state somewhere in the Database or Cache brings additional deserialization overhead,
+and having it in memory might be hard if the system doesn't give you partitioning
+guarantees (that requests dedicated to same logical entity will end up on the same node).
+
+Halflife approach is simple: develop on one box, for one box, break processing in logical
+steps for distribution and scale up upon the need. Because of the nature and the layout
+of streams and data, you will be able to scale it up.
+
 ## Terminology
 
 `Stream` is a term coming from Reactive Programming. Stream looks a little like a collection
