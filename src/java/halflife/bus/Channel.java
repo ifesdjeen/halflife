@@ -2,11 +2,13 @@ package halflife.bus;
 
 import halflife.bus.channel.ConsumingChannel;
 import halflife.bus.channel.PublishingChannel;
+import halflife.bus.concurrent.AVar;
 import halflife.bus.concurrent.Atom;
 import org.pcollections.PVector;
 import reactor.fn.tuple.Tuple;
 import reactor.fn.tuple.Tuple2;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -52,6 +54,18 @@ public class Channel<T> implements PublishingChannel<T>, ConsumingChannel<T> {
     });
   }
 
+  public T get(int time, TimeUnit timeUnit) throws InterruptedException {
+    AVar<T> aVar = new AVar<>();
+
+    Runnable cancelFn = this.stream.cancellableConsumer(aVar::set);
+
+    try {
+      return aVar.get(time, timeUnit);
+    } finally {
+      cancelFn.run();
+    }
+  }
+
   public AnonymousStream<T> stream() {
     this.isDrained.set(true);
     return this.stream;
@@ -68,4 +82,9 @@ public class Channel<T> implements PublishingChannel<T>, ConsumingChannel<T> {
   public ConsumingChannel<T> consumingChannel() {
     return this;
   }
+
+  public void dispose() {
+    stream.unregister();
+  }
+
 }
