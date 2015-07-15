@@ -83,4 +83,39 @@ public class ChannelTest extends AbstractFirehoseTest {
     chan.tell(3);
     assertThat(consumingChannel.get(), is(3));
   }
+
+  @Test
+  public void timedGetTest() throws InterruptedException {
+    Stream<Integer> stream = new Stream<>(firehose);
+    Channel<Integer> chan = stream.channel();
+
+    new Thread(() -> {
+      try {
+        Thread.sleep(1000);
+        chan.tell(1);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }).start();
+
+    assertThat(firehose.getConsumerRegistry().stream().count(), is(1L));
+    assertThat(chan.get(2000, TimeUnit.MILLISECONDS), is(1));
+    assertThat(firehose.getConsumerRegistry().stream().count(), is(0L));
+  }
+
+  @Test
+  public void timedGetUnresolvedTest() throws InterruptedException {
+    Stream<Integer> stream = new Stream<>(firehose);
+    Channel<Integer> chan = stream.channel();
+
+    assertThat(firehose.getConsumerRegistry().stream().count(), is(1L));
+    boolean caught = false;
+    try {
+      chan.get(100, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      caught = true;
+    }
+    assertThat(caught, is(true));
+    assertThat(firehose.getConsumerRegistry().stream().count(), is(0L));
+  }
 }
