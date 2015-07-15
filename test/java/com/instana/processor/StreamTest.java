@@ -126,7 +126,6 @@ public class StreamTest extends AbstractFirehoseTest {
     Stream<Integer> intStream = new Stream<>(firehose);
 
     intStream.partition(Key.wrap("key1"), Key.wrap("key2"), (i) -> {
-      // System.out.println(i);
       return i.size() == 5;
     });
     intStream.consume(Key.wrap("key2"), (List<Integer> a) -> {
