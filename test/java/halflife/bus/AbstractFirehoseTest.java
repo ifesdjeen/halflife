@@ -1,4 +1,4 @@
-package com.instana.processor;
+package halflife.bus;
 
 import halflife.bus.Firehose;
 import halflife.bus.KeyedConsumer;

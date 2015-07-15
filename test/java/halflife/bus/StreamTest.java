@@ -1,8 +1,5 @@
-package com.instana.processor;
+package halflife.bus;
 
-import halflife.bus.Firehose;
-import halflife.bus.KeyedConsumer;
-import halflife.bus.Stream;
 import halflife.bus.concurrent.AVar;
 import halflife.bus.concurrent.Atom;
 import halflife.bus.key.Key;

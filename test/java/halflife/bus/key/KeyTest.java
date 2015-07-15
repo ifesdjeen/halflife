@@ -1,4 +1,4 @@
-package com.instana.processor.key;
+package halflife.bus.key;
 
 import halflife.bus.key.Key;
 import org.junit.Test;

@@ -1,11 +1,8 @@
-package com.instana.processor;
+package halflife.bus;
 
-import halflife.bus.Channel;
-import halflife.bus.Stream;
 import halflife.bus.channel.ConsumingChannel;
 import halflife.bus.channel.PublishingChannel;
 import halflife.bus.concurrent.AVar;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;

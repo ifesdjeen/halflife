@@ -1,7 +1,5 @@
-package com.instana.processor;
+package halflife.bus;
 
-import halflife.bus.AnonymousStream;
-import halflife.bus.Stream;
 import halflife.bus.concurrent.AVar;
 import halflife.bus.key.Key;
 import org.junit.Test;

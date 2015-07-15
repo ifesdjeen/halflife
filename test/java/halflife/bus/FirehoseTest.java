@@ -1,6 +1,5 @@
-package com.instana.processor;
+package halflife.bus;
 
-import halflife.bus.KeyedConsumer;
 import halflife.bus.concurrent.AVar;
 import halflife.bus.key.Key;
 import org.junit.Test;
