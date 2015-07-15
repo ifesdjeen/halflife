@@ -118,4 +118,14 @@ public class ChannelTest extends AbstractFirehoseTest {
     assertThat(caught, is(true));
     assertThat(firehose.getConsumerRegistry().stream().count(), is(0L));
   }
+
+  @Test
+  public void channelDisposeTest() throws InterruptedException {
+    Stream<Integer> stream = new Stream<>(firehose);
+    assertThat(firehose.getConsumerRegistry().stream().count(), is(0L));
+    Channel<Integer> chan = stream.channel();
+    assertThat(firehose.getConsumerRegistry().stream().count(), is(1L));
+    chan.dispose();
+    assertThat(firehose.getConsumerRegistry().stream().count(), is(0L));
+  }
 }
