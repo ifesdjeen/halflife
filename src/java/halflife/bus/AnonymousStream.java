@@ -40,6 +40,14 @@ public class AnonymousStream<V> {
   }
 
   @SuppressWarnings(value = {"unchecked"})
+  public Runnable cancellableConsumer(Consumer<V> consumer) {
+    stream.consume(upstream, consumer);
+    return () -> {
+      stream.unregister(upstream);
+    };
+  }
+
+  @SuppressWarnings(value = {"unchecked"})
   public void notify(V v) {
     this.stream.notify(upstream, v);
   }
