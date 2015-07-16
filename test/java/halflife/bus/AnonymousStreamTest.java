@@ -32,6 +32,25 @@ public class AnonymousStreamTest extends AbstractFirehoseTest {
   }
 
   @Test
+  public void testFilter() throws InterruptedException {
+    Stream<Integer> stream = new Stream<>(firehose);
+    AVar<Integer> res = new AVar<>();
+
+    stream.anonymous(Key.wrap("source"))
+          .map(i -> i + 1)
+          .filter(i -> i % 2 != 0)
+          .map(i -> i * 2)
+
+          .consume(res::set);
+
+
+    firehose.notify(Key.wrap("source"), 1);
+    firehose.notify(Key.wrap("source"), 2);
+
+    assertThat(res.get(1, TimeUnit.SECONDS), is(6));
+  }
+
+  @Test
   public void testPartition() throws InterruptedException {
     Stream<Integer> stream = new Stream<>(firehose);
     AVar<List<Integer>> res = new AVar<>();
