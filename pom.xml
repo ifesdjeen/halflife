@@ -18,7 +18,7 @@
   </licenses>
 
   <properties>
-    <reactor.version>2.0.3.RELEASE</reactor.version>
+    <reactor.version>2.0.4.RELEASE</reactor.version>
     <argLine.common>
       -server
       -dsa -da
