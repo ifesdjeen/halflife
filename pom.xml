@@ -18,8 +18,10 @@
   </licenses>
 
   <properties>
+    <halflife.version>0.0.1-SNAPSHOT</halflife.version>
     <reactor.version>2.0.4.RELEASE</reactor.version>
     <pcollections.version>2.1.2</pcollections.version>
+    <kafka.version>0.8.3-SNAPSHOT</kafka.version>
     <argLine.common>
       -server
       -dsa -da
@@ -143,6 +145,11 @@
         <version>${pcollections.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-clients</artifactId>
+        <version>0.8.3-SNAPSHOT</version>
+      </dependency>
+      <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>4.12</version>
@@ -153,6 +160,12 @@
         <artifactId>hamcrest-all</artifactId>
         <version>1.3</version>
         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>halflife</groupId>
+        <artifactId>halflife</artifactId>
+        <version>${halflife.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -169,7 +182,54 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <repositories>
+    <repository>
+      <id>central</id>
+      <url>https://repo1.maven.org/maven2/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
+    <repository>
+      <id>sonatype-nexus-snapshots</id>
+      <name>Sonatype Nexus Snapshots</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>sonatype-nexus-releases</id>
+      <name>Sonatype Nexus Releases</name>
+      <url>https://oss.sonatype.org/content/repositories/releases</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>spring-libs-releases</id>
+      <url>http://repo.spring.io/libs-release</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
   <modules>
     <module>halflife-core</module>
+    <module>halflife-kafka</module>
   </modules>
 </project>
