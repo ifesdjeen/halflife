@@ -5,10 +5,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>halflife</groupId>
-  <artifactId>halflife</artifactId>
-  <packaging>jar</packaging>
+  <artifactId>halflife-parent</artifactId>
+  <packaging>pom</packaging>
   <version>0.0.1-SNAPSHOT</version>
-  <name>halflife</name>
+  <name>halflife-parent</name>
   <description>Halflife</description>
 
   <licenses>
@@ -154,4 +154,7 @@
     </dependency>
   </dependencies>
 
+  <modules>
+    <module>halflife-core</module>
+  </modules>
 </project>
