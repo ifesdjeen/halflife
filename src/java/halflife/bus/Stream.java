@@ -69,9 +69,9 @@ public class Stream<V> {
 
   @SuppressWarnings(value = {"unchecked"})
   public <SRC extends Key, DST extends Key, V1, ST> Stream<V1> map(SRC source,
-                                                               DST destination,
-                                                               BiFunction<Atom<ST>, V, V1> fn,
-                                                               ST init) {
+                                                                   DST destination,
+                                                                   BiFunction<Atom<ST>, V, V1> fn,
+                                                                   ST init) {
     Atom<ST> st = stateProvider.makeAtom(source, init);
 
     firehose.on(source, new KeyedConsumer<SRC, V>() {
@@ -161,4 +161,11 @@ public class Stream<V> {
     this.firehose.unregister(pred);
   }
 
+  public Firehose firehose() {
+    return this.firehose;
+  }
+
+  public StateProvider stateProvider () {
+    return this.stateProvider;
+  }
 }
