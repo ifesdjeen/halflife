@@ -6,7 +6,7 @@
 
   <groupId>halflife</groupId>
   <artifactId>halflife</artifactId>
-  <packaging>pom</packaging>
+  <packaging>jar</packaging>
   <version>0.0.1-SNAPSHOT</version>
   <name>halflife</name>
   <description>Halflife</description>
