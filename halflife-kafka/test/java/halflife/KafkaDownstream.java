@@ -7,6 +7,9 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import java.util.Properties;
 import java.util.function.Function;
 
+/**
+ * Publishes all the received values to the given kafka topic
+ */
 public class KafkaDownstream<K, K1, V, V1> implements Downstream<K, V> {
 
   private final KafkaProducer<K1, V1> kafkaProducer;
