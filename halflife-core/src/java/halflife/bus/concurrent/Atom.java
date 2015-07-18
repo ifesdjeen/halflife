@@ -21,7 +21,6 @@ public class  Atom<T> {
     return ref.get();
   }
 
-  // TODO: SwapFn is just an unary operator
   public T swap(UnaryOperator<T> swapOp) {
     for (;;) {
       T old = ref.get();
