@@ -262,11 +262,4 @@ consumingChannel.get();
 # License
 
 Copyright © 2014 Alex Petrov
-
-Distributed under the Eclipse Public License, the same as Clojure.
-
-
-
-
-
-
+Double licensed under the Eclipse Public License or the Apache Public License 2.0.
