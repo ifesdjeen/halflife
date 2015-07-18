@@ -15,18 +15,21 @@ public class AVar<T> {
   public AVar() {
     this(1);
   }
+
   public AVar(int i) {
     this.latch = new CountDownLatch(i);
     this.ref = new AtomicReference<T>();
   }
 
   public void set(T obj) {
-    if (this.latch.getCount() > 0) {
-      this.ref.set(obj);
-      this.latch.countDown();
-    } else {
-      throw new RuntimeException("This AVar has already been set");
+    synchronized (this) {
+      if (this.latch.getCount() > 0) {
+        this.ref.set(obj);
+        this.latch.countDown();
+        return;
+      }
     }
+    throw new RuntimeException("This AVar has already been set");
   }
 
   public T get(long timeout, TimeUnit unit) throws InterruptedException {
