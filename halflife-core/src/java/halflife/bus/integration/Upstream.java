@@ -1,4 +1,4 @@
-package halflife.kafka;
+package halflife.bus.integration;
 
 import halflife.bus.Firehose;
 

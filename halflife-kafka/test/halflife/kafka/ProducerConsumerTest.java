@@ -15,7 +15,7 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-public class ProducderConsumerTest {
+public class ProducerConsumerTest {
 
   @Before
   public void setup() {
@@ -67,6 +67,7 @@ public class ProducderConsumerTest {
       System.out.println(record.key());
       System.out.println(record.value());
     }
+
   }
 }
 
