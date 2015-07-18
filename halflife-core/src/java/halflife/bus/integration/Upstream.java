@@ -2,8 +2,15 @@ package halflife.bus.integration;
 
 import halflife.bus.Firehose;
 
-public interface Upstream<K, V> {
+public abstract class Upstream<K, V> {
 
-  public void startPublishing(Firehose<K, V> firehose);
+  private final Firehose firehose;
 
+  public Upstream(Firehose firehose) {
+    this.firehose = firehose;
+  }
+
+  public void publish(K key, V value) {
+    this.firehose.notify(key, value);
+  }
 }
