@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -60,6 +61,33 @@ public class StreamTest extends AbstractFirehoseTest {
     intStream.notify(Key.wrap("key1"), 1);
 
     assertThat(res.get(1, TimeUnit.SECONDS), is(2));
+  }
+
+  @Test
+  public void debounceTest() throws InterruptedException {
+    AVar<Integer> res = new AVar<>();
+    Stream<Integer> intStream = new Stream<>(firehose);
+
+
+    intStream.map(Key.wrap("key1"), Key.wrap("key2"), (i) -> i + 1);
+    intStream.debounce(Key.wrap("key2"), Key.wrap("key3"), 100, TimeUnit.MILLISECONDS);
+
+    {
+      CountDownLatch latch = new CountDownLatch(1);
+      AtomicInteger counter = new AtomicInteger(0);
+      intStream.consume(Key.wrap("key3"), (Integer i) -> {
+        res.set(i);
+        counter.incrementAndGet();
+        latch.countDown();
+      });
+
+      intStream.notify(Key.wrap("key1"), 1);
+      intStream.notify(Key.wrap("key1"), 2);
+      intStream.notify(Key.wrap("key1"), 3);
+      latch.await(1, TimeUnit.SECONDS);
+      assertThat(counter.get(), is(1));
+    }
+    assertThat(res.get(1, TimeUnit.SECONDS), is(4));
   }
 
   @Test
