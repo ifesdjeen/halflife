@@ -10,11 +10,18 @@ import halflife.bus.state.StateProvider;
 import halflife.bus.state.StatefulSupplier;
 import org.pcollections.PVector;
 import org.pcollections.TreePVector;
+import reactor.fn.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.*;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
+// TODO: MAybe merge stream and firehose? O_O
 public class Stream<V> {
 
   private final Firehose      firehose;
@@ -118,6 +125,30 @@ public class Stream<V> {
   }
 
   @SuppressWarnings(value = {"unchecked"})
+  public <SRC extends Key, DST extends Key> Stream<V> debounce(SRC source,
+                                                               DST destination,
+                                                               int period,
+                                                               TimeUnit timeUnit) {
+    final Atom<V> debounced = stateProvider.makeAtom(source, null);
+
+    firehose.getTimer().schedule(discarded_ -> {
+      V currentDebounced = debounced.swapReturnOld(old_ -> null);
+      if (currentDebounced != null) {
+        firehose.notify(destination, currentDebounced);
+      }
+    }, period, timeUnit);
+
+    firehose.on(source, new KeyedConsumer<SRC, V>() {
+      @Override
+      public void accept(SRC key, V value) {
+        debounced.swap(discardedOld_ -> value);
+      }
+    });
+
+    return new Stream<>(firehose);
+  }
+
+  @SuppressWarnings(value = {"unchecked"})
   public <SRC extends Key, V1> void consume(SRC source,
                                             Consumer<V1> consumer) {
     this.consume(source,
@@ -134,6 +165,7 @@ public class Stream<V> {
                                             KeyedConsumer<SRC, V1> consumer) {
     firehose.on(source, consumer);
   }
+
 
   @SuppressWarnings(value = {"unchecked"})
   public <SRC extends Key> AnonymousStream<V> anonymous(SRC source) {
@@ -175,4 +207,8 @@ public class Stream<V> {
   public StateProvider stateProvider() {
     return this.stateProvider;
   }
+
+  // TODO: last()
+  // TODO: first()
+
 }
