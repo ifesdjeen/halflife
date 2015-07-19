@@ -1,5 +1,6 @@
 package halflife.bus;
 
+import halflife.bus.concurrent.LazyVar;
 import halflife.bus.registry.DefaultingRegistry;
 import halflife.bus.registry.KeyMissMatcher;
 import halflife.bus.registry.Registration;
@@ -7,9 +8,10 @@ import halflife.bus.registry.Registry;
 import reactor.core.Dispatcher;
 import reactor.core.support.Assert;
 import reactor.fn.Consumer;
+import reactor.fn.timer.HashWheelTimer;
 
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -19,6 +21,7 @@ public class Firehose<K, V> {
   private final Dispatcher                                 dispatcher;
   private final DefaultingRegistry<K, KeyedConsumer<K, V>> consumerRegistry;
   private final Consumer<Throwable>                        dispatchErrorHandler;
+  private final LazyVar<HashWheelTimer>                    timer;
 
   public Firehose(Dispatcher dispatcher,
                   DefaultingRegistry<K, KeyedConsumer<K, V>> registry,
@@ -26,6 +29,9 @@ public class Firehose<K, V> {
     this.dispatcher = dispatcher;
     this.consumerRegistry = registry;
     this.dispatchErrorHandler = dispatchErrorHandler;
+    this.timer = new LazyVar<>(() -> {
+      return new HashWheelTimer(1024);
+    });
   }
 
   public Firehose<K, V> notify(K key, V ev) {
@@ -67,5 +73,9 @@ public class Firehose<K, V> {
 
   public Registry<K, KeyedConsumer<K, V>> getConsumerRegistry() {
     return this.consumerRegistry;
+  }
+
+  public HashWheelTimer getTimer() throws InterruptedException {
+    return this.timer.get();
   }
 }
