@@ -36,12 +36,8 @@ public class LazyVarTest {
 
     for (int i = 0; i < 10; i++) {
       executor.submit(() -> {
-        try {
-          reads.add(lazyVar.get());
-          latch.countDown();
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
+        reads.add(lazyVar.get());
+        latch.countDown();
       });
     }
 
