@@ -30,7 +30,7 @@ public class Firehose<K, V> {
     this.consumerRegistry = registry;
     this.dispatchErrorHandler = dispatchErrorHandler;
     this.timer = new LazyVar<>(() -> {
-      return new HashWheelTimer(1024);
+      return new HashWheelTimer(10);
     });
   }
 
