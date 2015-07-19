@@ -17,7 +17,7 @@ import java.util.function.*;
 
 public class Stream<V> {
 
-  private final Firehose firehose;
+  private final Firehose      firehose;
   private final StateProvider stateProvider;
 
   public Stream(Firehose firehose) {
@@ -108,7 +108,7 @@ public class Stream<V> {
     firehose.on(source, new KeyedConsumer<SRC, V>() {
       @Override
       public void accept(SRC key, V value) {
-        if(predicate.test(value)) {
+        if (predicate.test(value)) {
           firehose.notify(destination, value);
         }
       }
@@ -149,7 +149,7 @@ public class Stream<V> {
 
   @SuppressWarnings(value = {"unchecked"})
   public Channel<V> channel() {
-    Key k = new Key(new Object[] { UUID.randomUUID() });
+    Key k = new Key(new Object[]{UUID.randomUUID()});
     AnonymousStream<V> anonymousStream = new AnonymousStream<>(k,
                                                                this);
     return new Channel<V>(anonymousStream,
@@ -172,7 +172,7 @@ public class Stream<V> {
     return this.firehose;
   }
 
-  public StateProvider stateProvider () {
+  public StateProvider stateProvider() {
     return this.stateProvider;
   }
 }
