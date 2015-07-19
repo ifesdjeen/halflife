@@ -120,12 +120,19 @@ public class Stream<V> {
   @SuppressWarnings(value = {"unchecked"})
   public <SRC extends Key, V1> void consume(SRC source,
                                             Consumer<V1> consumer) {
-    firehose.on(source, new KeyedConsumer<SRC, V1>() {
-      @Override
-      public void accept(SRC key_, V1 value) {
-        consumer.accept(value);
-      }
-    });
+    this.consume(source,
+                 new KeyedConsumer<SRC, V1>() {
+                   @Override
+                   public void accept(SRC key_, V1 value) {
+                     consumer.accept(value);
+                   }
+                 });
+  }
+
+  @SuppressWarnings(value = {"unchecked"})
+  public <SRC extends Key, V1> void consume(SRC source,
+                                            KeyedConsumer<SRC, V1> consumer) {
+    firehose.on(source, consumer);
   }
 
   @SuppressWarnings(value = {"unchecked"})
