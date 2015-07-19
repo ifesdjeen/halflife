@@ -75,7 +75,7 @@ public class Firehose<K, V> {
     return this.consumerRegistry;
   }
 
-  public HashWheelTimer getTimer() throws InterruptedException {
+  public HashWheelTimer getTimer() {
     return this.timer.get();
   }
 }

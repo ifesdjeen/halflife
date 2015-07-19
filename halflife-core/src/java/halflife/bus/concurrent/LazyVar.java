@@ -19,7 +19,7 @@ public class LazyVar<T> {
     this.latch = new CountDownLatch(1);
   }
 
-  public T get() throws InterruptedException {
+  public T get() {
     if (isSet.compareAndSet(false, true)) {
       this.ref.set(supplier.get());
       this.latch.countDown();
@@ -27,7 +27,11 @@ public class LazyVar<T> {
 
     // We need a latch here because otherwise we can't guarantee concurrent getters not
     // to race with setter.
-    latch.await();
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      // hand a control back over
+    }
     return this.ref.get();
   }
 }
