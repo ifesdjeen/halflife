@@ -3,6 +3,9 @@ package halflife.bus;
 import halflife.bus.concurrent.AVar;
 import halflife.bus.key.Key;
 import org.junit.Test;
+import reactor.core.Dispatcher;
+import reactor.core.dispatch.ThreadPoolExecutorDispatcher;
+import reactor.fn.Consumer;
 import reactor.fn.tuple.Tuple;
 import reactor.fn.tuple.Tuple2;
 
@@ -12,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class FirehoseTest extends AbstractFirehoseTest {
 
@@ -124,5 +128,26 @@ public class FirehoseTest extends AbstractFirehoseTest {
 
     assertThat(latch2.getCount(), is(0L));
     assertThat(latch.getCount(), is(2L));
+  }
+
+  @Test
+  public void errorTest() throws InterruptedException {
+    AVar<Throwable> caught = new AVar<>();
+    Dispatcher asyncDispatcher = new ThreadPoolExecutorDispatcher(2, 100);
+    Firehose<Key, Integer> asyncFirehose = new Firehose<>(asyncDispatcher,
+                                                          consumerRegistry,
+                                                          null,
+                                                          throwable -> caught.set(throwable));
+    Key k1 = Key.wrap("key1");
+
+    asyncFirehose.on(k1, (i) -> {
+      int j = i / 0;
+    });
+
+    asyncFirehose.notify(k1, 1);
+    
+    assertTrue(caught.get(1, TimeUnit.MINUTES) instanceof ArithmeticException);
+
+    asyncDispatcher.shutdown();
   }
 }

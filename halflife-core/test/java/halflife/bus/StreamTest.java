@@ -41,7 +41,8 @@ public class StreamTest extends AbstractFirehoseTest {
 
     this.firehose = new Firehose(dispatcher,
                                  consumerRegistry,
-                                 dispatchErrorHandler);
+                                 dispatchErrorHandler,
+                                 null);
   }
 
   @After

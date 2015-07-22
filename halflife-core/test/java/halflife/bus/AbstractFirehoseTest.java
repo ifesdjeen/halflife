@@ -1,24 +1,13 @@
 package halflife.bus;
 
-import halflife.bus.Firehose;
-import halflife.bus.KeyedConsumer;
-import halflife.bus.concurrent.AVar;
 import halflife.bus.key.Key;
 import halflife.bus.registry.ConcurrentRegistry;
 import halflife.bus.registry.DefaultingRegistry;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 import reactor.core.Dispatcher;
 import reactor.core.dispatch.SynchronousDispatcher;
 import reactor.fn.Consumer;
-import reactor.fn.tuple.Tuple;
-import reactor.fn.tuple.Tuple2;
-
-import java.util.concurrent.TimeUnit;
-
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
 public class AbstractFirehoseTest {
 
@@ -38,7 +27,8 @@ public class AbstractFirehoseTest {
 
     this.firehose = new Firehose<>(dispatcher,
                                    consumerRegistry,
-                                   dispatchErrorHandler);
+                                   dispatchErrorHandler,
+                                   null);
   }
 
   @After
