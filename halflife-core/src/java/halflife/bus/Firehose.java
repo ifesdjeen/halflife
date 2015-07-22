@@ -11,7 +11,6 @@ import reactor.fn.Consumer;
 import reactor.fn.timer.HashWheelTimer;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -21,16 +20,20 @@ public class Firehose<K, V> {
   private final Dispatcher                                 dispatcher;
   private final DefaultingRegistry<K, KeyedConsumer<K, V>> consumerRegistry;
   private final Consumer<Throwable>                        dispatchErrorHandler;
+  private final Consumer<Throwable>                        consumeErrorHandler;
   private final LazyVar<HashWheelTimer>                    timer;
 
   public Firehose(Dispatcher dispatcher,
                   DefaultingRegistry<K, KeyedConsumer<K, V>> registry,
-                  Consumer<Throwable> dispatchErrorHandler) {
+                  Consumer<Throwable> dispatchErrorHandler,
+                  Consumer<Throwable> consumeErrorHandler) {
     this.dispatcher = dispatcher;
     this.consumerRegistry = registry;
     this.dispatchErrorHandler = dispatchErrorHandler;
+    this.consumeErrorHandler = consumeErrorHandler;
+
     this.timer = new LazyVar<>(() -> {
-      return new HashWheelTimer(10);
+      return new HashWheelTimer(10); // TODO: configurable hash wheel size!
     });
   }
 
@@ -40,7 +43,13 @@ public class Firehose<K, V> {
 
     dispatcher.dispatch(ev, t -> {
       for (Registration<K, ? extends KeyedConsumer<K, V>> reg : consumerRegistry.select(key)) {
-        reg.getObject().accept(key, t);
+        try {
+          reg.getObject().accept(key, t);
+        } catch (Throwable e) {
+          if (consumeErrorHandler != null) {
+            consumeErrorHandler.accept(e);
+          }
+        }
       }
     }, dispatchErrorHandler);
 
