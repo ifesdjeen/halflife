@@ -63,8 +63,21 @@ public class AnonymousStream<V> {
   }
 
   @SuppressWarnings(value = {"unchecked"})
-  public void consume(Consumer<V> consumer) {
+  public AnonymousStream<V> consume(Consumer<V> consumer) {
     stream.consume(upstream, consumer);
+    return this;
+  }
+
+  @SuppressWarnings(value = {"unchecked"})
+  public AnonymousStream<V> redirect(Key destination) {
+    stream.consume(upstream, new KeyedConsumer<Key, V>() {
+      @Override
+      public void accept(Key key, V value) {
+        stream.notify(destination, value);
+      }
+    });
+
+    return this;
   }
 
   @SuppressWarnings(value = {"unchecked"})
