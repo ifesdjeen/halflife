@@ -25,7 +25,6 @@ public class Stream<V> {
   private final Environment                          environment;
   private final Firehose                             firehose;
   private final StateProvider                        stateProvider;
-  private final Registry<Key, KeyedConsumer<Key, V>> registry;
 
   @SuppressWarnings(value = {"unchecked"})
   public Stream(Environment environment) {
@@ -64,7 +63,6 @@ public class Stream<V> {
     this.environment = environment;
     this.firehose = firehose;
     this.stateProvider = new DefaultStateProvider();
-    this.registry = firehose.getConsumerRegistry();
   }
 
 
