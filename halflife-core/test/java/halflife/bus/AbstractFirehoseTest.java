@@ -5,27 +5,25 @@ import halflife.bus.registry.ConcurrentRegistry;
 import halflife.bus.registry.DefaultingRegistry;
 import org.junit.After;
 import org.junit.Before;
-import reactor.core.Dispatcher;
-import reactor.core.dispatch.SynchronousDispatcher;
+import reactor.Environment;
 import reactor.fn.Consumer;
 
 public class AbstractFirehoseTest {
 
-  protected Dispatcher                                           dispatcher;
+  protected Firehose<Key, Integer>                               firehose;
+  protected Environment                                          environment;
   protected DefaultingRegistry<Key, KeyedConsumer<Key, Integer>> consumerRegistry;
   protected Consumer<Throwable>                                  dispatchErrorHandler;
-  protected Firehose<Key, Integer>                               firehose;
 
   @Before
   public void setup() {
-    this.dispatcher = new SynchronousDispatcher();
+    this.environment = new Environment();
     this.consumerRegistry = new ConcurrentRegistry<>();
     this.dispatchErrorHandler = throwable -> {
       System.out.println(throwable.getMessage());
       throwable.printStackTrace();
     };
-
-    this.firehose = new Firehose<>(dispatcher,
+    this.firehose = new Firehose<>(environment.getDispatcher("sync"),
                                    consumerRegistry,
                                    dispatchErrorHandler,
                                    null);
@@ -33,10 +31,8 @@ public class AbstractFirehoseTest {
 
   @After
   public void teardown() {
-    this.dispatcher.shutdown();
-    this.firehose = null;
+    this.environment.shutdown();
   }
-
 
 }
 

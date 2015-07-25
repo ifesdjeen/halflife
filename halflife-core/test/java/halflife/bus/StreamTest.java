@@ -23,38 +23,12 @@ import java.util.function.Predicate;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class StreamTest extends AbstractFirehoseTest {
-
-  private   Dispatcher                                      dispatcher;
-  protected DefaultingRegistry<Object, KeyedConsumer<Object, Object>> consumerRegistry;
-  protected Consumer<Throwable>                             dispatchErrorHandler;
-  protected Firehose                                        firehose;
-
-  @Before
-  public void setup() {
-    this.dispatcher = new SynchronousDispatcher();
-    this.consumerRegistry = new ConcurrentRegistry<>();
-    this.dispatchErrorHandler = throwable -> {
-      System.out.println(throwable.getMessage());
-      throwable.printStackTrace();
-    };
-
-    this.firehose = new Firehose(dispatcher,
-                                 consumerRegistry,
-                                 dispatchErrorHandler,
-                                 null);
-  }
-
-  @After
-  public void teardown() {
-    this.dispatcher.shutdown();
-    this.firehose = null;
-  }
+public class StreamTest extends AbstractStreamTest {
 
   @Test
   public void testMap() throws InterruptedException {
     AVar<Integer> res = new AVar<>();
-    Stream<Integer> intStream = new Stream<>(firehose);
+    Stream<Integer> intStream = new Stream<>(environment);
 
     intStream.map(Key.wrap("key1"), Key.wrap("key2"), (i) -> i + 1);
     intStream.consume(Key.wrap("key2"), res::set);
@@ -67,7 +41,7 @@ public class StreamTest extends AbstractFirehoseTest {
   @Test
   public void debounceTest() throws InterruptedException {
     AVar<Integer> res = new AVar<>();
-    Stream<Integer> intStream = new Stream<>(firehose);
+    Stream<Integer> intStream = new Stream<>(environment);
 
 
     intStream.map(Key.wrap("key1"), Key.wrap("key2"), (i) -> i + 1);
@@ -94,7 +68,7 @@ public class StreamTest extends AbstractFirehoseTest {
   @Test
   public void streamStateSupplierTest() throws InterruptedException {
     AVar<Integer> res = new AVar<>(3);
-    Stream<Integer> intStream = new Stream<>(firehose);
+    Stream<Integer> intStream = new Stream<>(environment);
 
     intStream.map(Key.wrap("key1"), Key.wrap("key2"), (i) -> i + 1);
     intStream.map(Key.wrap("key2"), Key.wrap("key3"), (Atom<Integer> state) -> {
@@ -115,7 +89,7 @@ public class StreamTest extends AbstractFirehoseTest {
   @Test
   public void streamStateFnTest() throws InterruptedException {
     AVar<Integer> res = new AVar<>(3);
-    Stream<Integer> intStream = new Stream<>(firehose);
+    Stream<Integer> intStream = new Stream<>(environment);
 
     intStream.map(Key.wrap("key1"), Key.wrap("key2"), (i) -> i + 1);
     intStream.map(Key.wrap("key2"), Key.wrap("key3"), (Atom<Integer> state, Integer i) -> {
@@ -134,7 +108,7 @@ public class StreamTest extends AbstractFirehoseTest {
   @Test
   public void streamFilterTest() throws InterruptedException {
     AVar<Integer> res = new AVar<>(2);
-    Stream<Integer> intStream = new Stream<>(firehose);
+    Stream<Integer> intStream = new Stream<>(environment);
 
     intStream.filter(Key.wrap("key1"), Key.wrap("key2"), (i) -> i % 2 == 0);
     intStream.consume(Key.wrap("key2"), res::set);
@@ -149,7 +123,7 @@ public class StreamTest extends AbstractFirehoseTest {
   @Test
   public void partitionTest() throws InterruptedException {
     AVar<List<Integer>> res = new AVar<>();
-    Stream<Integer> intStream = new Stream<>(firehose);
+    Stream<Integer> intStream = new Stream<>(environment);
 
     intStream.partition(Key.wrap("key1"), Key.wrap("key2"), (i) -> {
       return i.size() == 5;
@@ -172,7 +146,7 @@ public class StreamTest extends AbstractFirehoseTest {
   @Test
   public void slideTest() throws InterruptedException {
     AVar<List<Integer>> res = new AVar<>(6);
-    Stream<Integer> intStream = new Stream<>(firehose);
+    Stream<Integer> intStream = new Stream<>(environment);
 
     intStream.slide(Key.wrap("key1"), Key.wrap("key2"), (i) -> {
       return i.subList(i.size() > 5 ? i.size() - 5 : 0,
@@ -188,7 +162,7 @@ public class StreamTest extends AbstractFirehoseTest {
     intStream.notify(Key.wrap("key1"), 4);
     intStream.notify(Key.wrap("key1"), 5);
     intStream.notify(Key.wrap("key1"), 6);
-    assertThat(res.get(1, TimeUnit.SECONDS), is(TreePVector.from(Arrays.asList(2,3,4,5,6))));
+    assertThat(res.get(1, TimeUnit.SECONDS), is(TreePVector.from(Arrays.asList(2, 3, 4, 5, 6))));
   }
 
   @Test
@@ -197,7 +171,7 @@ public class StreamTest extends AbstractFirehoseTest {
     Key k2 = Key.wrap("key2");
 
     CountDownLatch latch = new CountDownLatch(1);
-    Stream<Integer> intStream = new Stream<>(firehose);
+    Stream<Integer> intStream = new Stream<>(environment);
 
     intStream.map(k1, k2, (i) -> i + 1);
     intStream.consume(k2, (i) -> latch.countDown());
@@ -214,7 +188,7 @@ public class StreamTest extends AbstractFirehoseTest {
     Key k2 = Key.wrap("key2");
 
     CountDownLatch latch = new CountDownLatch(2);
-    Stream<Integer> intStream = new Stream<>(firehose);
+    Stream<Integer> intStream = new Stream<>(environment);
 
     intStream.map(k1, k2, (i) -> {
       latch.countDown();

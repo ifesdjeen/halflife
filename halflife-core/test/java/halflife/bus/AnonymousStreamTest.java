@@ -13,11 +13,11 @@ import java.util.concurrent.TimeUnit;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class AnonymousStreamTest extends AbstractFirehoseTest {
+public class AnonymousStreamTest extends AbstractStreamTest {
 
   @Test
   public void testMap() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(firehose);
+    Stream<Integer> stream = new Stream<>(environment);
     AVar<Integer> res = new AVar<>();
 
     stream.anonymous(Key.wrap("source"))
@@ -26,14 +26,14 @@ public class AnonymousStreamTest extends AbstractFirehoseTest {
           .consume(res::set);
 
 
-    firehose.notify(Key.wrap("source"), 1);
+    stream.notify(Key.wrap("source"), 1);
 
     assertThat(res.get(1, TimeUnit.SECONDS), is(4));
   }
 
   @Test
   public void testFilter() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(firehose);
+    Stream<Integer> stream = new Stream<>(environment);
     AVar<Integer> res = new AVar<>();
 
     stream.anonymous(Key.wrap("source"))
@@ -44,15 +44,15 @@ public class AnonymousStreamTest extends AbstractFirehoseTest {
           .consume(res::set);
 
 
-    firehose.notify(Key.wrap("source"), 1);
-    firehose.notify(Key.wrap("source"), 2);
+    stream.notify(Key.wrap("source"), 1);
+    stream.notify(Key.wrap("source"), 2);
 
     assertThat(res.get(1, TimeUnit.SECONDS), is(6));
   }
 
   @Test
   public void testPartition() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(firehose);
+    Stream<Integer> stream = new Stream<>(environment);
     AVar<List<Integer>> res = new AVar<>();
 
     stream.anonymous(Key.wrap("source"))
@@ -74,7 +74,7 @@ public class AnonymousStreamTest extends AbstractFirehoseTest {
 
   @Test
   public void testSlide() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(firehose);
+    Stream<Integer> stream = new Stream<>(environment);
     AVar<List<Integer>> res = new AVar<>(6);
 
     stream.anonymous(Key.wrap("source"))
@@ -96,7 +96,7 @@ public class AnonymousStreamTest extends AbstractFirehoseTest {
 
   @Test
   public void testNotify() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(firehose);
+    Stream<Integer> stream = new Stream<>(environment);
     AVar<Integer> res = new AVar<>();
 
     AnonymousStream<Integer> s = stream.anonymous(Key.wrap("source"));
@@ -105,14 +105,14 @@ public class AnonymousStreamTest extends AbstractFirehoseTest {
      .map(i -> i * 2)
      .consume(res::set);
 
-    firehose.notify(Key.wrap("source"), 1);
+    stream.notify(Key.wrap("source"), 1);
 
     assertThat(res.get(1, TimeUnit.SECONDS), is(4));
   }
 
   @Test
   public void testUnregister() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(firehose);
+    Stream<Integer> stream = new Stream<>(environment);
     CountDownLatch latch = new CountDownLatch(2);
 
     AnonymousStream<Integer> s = stream.anonymous(Key.wrap("source"));
@@ -121,12 +121,12 @@ public class AnonymousStreamTest extends AbstractFirehoseTest {
      .map(i -> i * 2)
      .consume(i -> latch.countDown());
 
-    firehose.notify(Key.wrap("source"), 1);
+    stream.notify(Key.wrap("source"), 1);
     s.unregister();
-    firehose.notify(Key.wrap("source"), 1);
+    stream.notify(Key.wrap("source"), 1);
 
     assertThat(latch.getCount(), is(1L));
-    assertThat(firehose.getConsumerRegistry().stream().count(), is(0L));
+    assertThat(stream.firehose().getConsumerRegistry().stream().count(), is(0L));
   }
 
 }

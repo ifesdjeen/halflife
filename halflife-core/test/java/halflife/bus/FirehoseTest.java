@@ -21,6 +21,7 @@ public class FirehoseTest extends AbstractFirehoseTest {
 
   @Test
   public void simpleOnTest() throws InterruptedException {
+
     AVar<Integer> val = new AVar<>();
     AVar<Integer> val2 = new AVar<>();
 

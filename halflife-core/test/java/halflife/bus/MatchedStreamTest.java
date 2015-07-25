@@ -12,11 +12,11 @@ import java.util.concurrent.TimeUnit;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class MatchedStreamTest extends AbstractFirehoseTest {
+public class MatchedStreamTest extends AbstractStreamTest {
 
   @Test
   public void mapTest() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(firehose);
+    Stream<Integer> stream = new Stream<>(environment);
     AVar<Integer> res = new AVar<>();
 
     stream.matched(key -> key.getPart(0).equals("source"))
@@ -24,14 +24,14 @@ public class MatchedStreamTest extends AbstractFirehoseTest {
           .map(i -> i * 2)
           .consume(res::set);
 
-    firehose.notify(Key.wrap("source", "first"), 1);
+    stream.notify(Key.wrap("source", "first"), 1);
 
     assertThat(res.get(1, TimeUnit.SECONDS), is(4));
   }
 
   @Test
   public void testFilter() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(firehose);
+    Stream<Integer> stream = new Stream<>(environment);
     AVar<Integer> res = new AVar<>();
 
     stream.matched(key -> key.getPart(0).equals("source"))
@@ -42,15 +42,15 @@ public class MatchedStreamTest extends AbstractFirehoseTest {
           .consume(res::set);
 
 
-    firehose.notify(Key.wrap("source"), 1);
-    firehose.notify(Key.wrap("source"), 2);
+    stream.notify(Key.wrap("source"), 1);
+    stream.notify(Key.wrap("source"), 2);
 
     assertThat(res.get(1, TimeUnit.SECONDS), is(6));
   }
 
   @Test
   public void testPartition() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(firehose);
+    Stream<Integer> stream = new Stream<>(environment);
     AVar<List<Integer>> res = new AVar<>();
 
     stream.matched(key -> key.getPart(0).equals("source"))
@@ -72,7 +72,7 @@ public class MatchedStreamTest extends AbstractFirehoseTest {
 
   @Test
   public void testSlide() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(firehose);
+    Stream<Integer> stream = new Stream<>(environment);
     AVar<List<Integer>> res = new AVar<>(6);
 
     stream.matched(key -> key.getPart(0).equals("source"))
