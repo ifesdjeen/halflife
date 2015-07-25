@@ -36,7 +36,7 @@ public class AVar<T> {
     if (this.latch.await(timeout, unit)) {
       return this.ref.get();
     } else {
-      throw new RuntimeException("AVar never retrieved a value");
+      throw new RuntimeException("AVar hasn't been set within a timeout");
     }
   }
 
