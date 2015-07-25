@@ -129,4 +129,22 @@ public class AnonymousStreamTest extends AbstractStreamTest {
     assertThat(stream.firehose().getConsumerRegistry().stream().count(), is(0L));
   }
 
+  @Test
+  public void testRedirect() throws InterruptedException {
+    Key destination = Key.wrap("destination");
+    Stream<Integer> stream = new Stream<>(environment);
+    AVar<Integer> res = new AVar<>();
+
+    AnonymousStream<Integer> s = stream.anonymous(Key.wrap("source"));
+
+    s.map((i) -> i + 1)
+     .map(i -> i * 2)
+     .redirect(destination);
+
+    stream.consume(destination, (Integer i) -> res.set(i));
+
+    stream.notify(Key.wrap("source"), 1);
+
+    assertThat(res.get(1, TimeUnit.SECONDS), is(4));
+  }
 }
