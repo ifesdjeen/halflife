@@ -7,7 +7,7 @@ import halflife.bus.registry.Registration;
 import halflife.bus.registry.Registry;
 import reactor.core.Dispatcher;
 import reactor.core.support.Assert;
-import reactor.fn.Consumer;
+import reactor.fn.Consumer ;
 import reactor.fn.timer.HashWheelTimer;
 
 import java.util.Map;
