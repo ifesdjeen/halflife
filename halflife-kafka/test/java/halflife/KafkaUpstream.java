@@ -13,9 +13,8 @@ import java.util.function.Function;
 // TODO: reduce amount of generic args
 public class KafkaUpstream<K, K1, V, V1> extends Upstream<K1, V1> {
 
-  private final String topic;
   private final KafkaConsumer<K, V> kafkaConsumer;
-  private final Thread workerThread;
+  private final Thread              workerThread;
   private final Consumer<Exception> onException;
 
   public KafkaUpstream(Firehose firehose,
@@ -26,7 +25,6 @@ public class KafkaUpstream<K, K1, V, V1> extends Upstream<K1, V1> {
                        Function<V, V1> valueMapper,
                        Consumer<Exception> onException) {
     super(firehose);
-    this.topic = topic;
     this.kafkaConsumer = new KafkaConsumer<K, V>(consumerProperties);
     this.onException = onException;
 
@@ -35,7 +33,7 @@ public class KafkaUpstream<K, K1, V, V1> extends Upstream<K1, V1> {
     this.workerThread = new Thread(new Runnable() {
       @Override
       public void run() {
-        while(!Thread.currentThread().isInterrupted()) {
+        while (!Thread.currentThread().isInterrupted()) {
           try {
             for (ConsumerRecord<K, V> record : kafkaConsumer.poll(1000).records(topic)) {
               try {
