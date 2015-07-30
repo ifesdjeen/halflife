@@ -5,9 +5,7 @@ import halflife.bus.key.Key;
 import halflife.bus.operation.PartitionOperation;
 import halflife.bus.operation.SlidingWindowOperation;
 import halflife.bus.registry.ConcurrentRegistry;
-import halflife.bus.registry.DefaultingRegistry;
 import halflife.bus.registry.KeyMissMatcher;
-import halflife.bus.registry.Registry;
 import halflife.bus.state.DefaultStateProvider;
 import halflife.bus.state.StateProvider;
 import halflife.bus.state.StatefulSupplier;
@@ -84,6 +82,21 @@ public class Stream<V> {
     return new Stream<>(environment,
                         firehose);
   }
+
+  @SuppressWarnings(value = {"unchecked"})
+  public <SRC extends Key, DST extends Key> Stream<V> divide(SRC source,
+                                                             BiFunction<SRC, V, DST> divider) {
+    firehose.on(source, new KeyedConsumer<SRC, V>() {
+      @Override
+      public void accept(SRC key, V value) {
+        firehose.notify(divider.apply(key, value), value);
+      }
+    });
+
+    return new Stream<>(environment,
+                        firehose);
+  }
+
 
   @SuppressWarnings(value = {"unchecked"})
   public <SRC extends Key, DST extends Key> Stream<List<V>> slide(SRC source,
@@ -255,6 +268,8 @@ public class Stream<V> {
   public StateProvider stateProvider() {
     return this.stateProvider;
   }
+
+
 
   // TODO: last()
   // TODO: first()
