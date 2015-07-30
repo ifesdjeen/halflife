@@ -7,7 +7,7 @@ import halflife.bus.registry.Registration;
 import halflife.bus.registry.Registry;
 import reactor.core.Dispatcher;
 import reactor.core.support.Assert;
-import reactor.fn.Consumer ;
+import reactor.fn.Consumer;
 import reactor.fn.timer.HashWheelTimer;
 
 import java.util.Map;
@@ -35,6 +35,13 @@ public class Firehose<K, V> {
     this.timer = new LazyVar<>(() -> {
       return new HashWheelTimer(10); // TODO: configurable hash wheel size!
     });
+  }
+
+  public Firehose<K, V> copy(Dispatcher dispatcher) {
+    return new Firehose<K, V>(dispatcher,
+                              consumerRegistry,
+                              dispatchErrorHandler,
+                              consumeErrorHandler);
   }
 
   public Firehose<K, V> notify(K key, V ev) {
