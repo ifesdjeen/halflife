@@ -202,5 +202,33 @@ public class StreamTest extends AbstractStreamTest {
 
     assertThat(latch.getCount(), is(2L));
   }
+
+  @Test
+  public void testDispatchers() throws InterruptedException {
+    Key k1 = Key.wrap("key1");
+    Key k2 = Key.wrap("key2");
+
+    CountDownLatch latch = new CountDownLatch(1);
+    Stream<Integer> intStream = new Stream<>(environment);
+
+    intStream.withDispatcher("workQueue")
+             .map(k1, k2, (i) -> {
+               try {
+                 Thread.sleep(100);
+               } catch (InterruptedException e) {
+                 e.printStackTrace();
+               }
+               return i;
+             });
+
+    intStream.consume(k2, (i) -> latch.countDown());
+
+    intStream.unregister((Predicate<Key>) key -> true);
+    intStream.notify(k1, 1);
+
+    assertThat(latch.getCount(), is(2L));
+  }
+
+
 }
 

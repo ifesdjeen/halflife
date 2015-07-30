@@ -22,9 +22,9 @@ import java.util.function.*;
 
 public class Stream<V> {
 
-  private final Environment                          environment;
-  private final Firehose                             firehose;
-  private final StateProvider                        stateProvider;
+  private final Environment   environment;
+  private final Firehose      firehose;
+  private final StateProvider stateProvider;
 
   @SuppressWarnings(value = {"unchecked"})
   public Stream(Environment environment) {
@@ -65,6 +65,10 @@ public class Stream<V> {
     this.stateProvider = new DefaultStateProvider();
   }
 
+  public Stream<V> withDispatcher(String dispatcher) {
+    return new Stream<V>(environment,
+                         firehose.copy(environment.getDispatcher(dispatcher)));
+  }
 
   @SuppressWarnings(value = {"unchecked"})
   public <SRC extends Key, DST extends Key> Stream<List<V>> partition(SRC source,
