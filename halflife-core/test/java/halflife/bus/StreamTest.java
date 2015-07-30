@@ -3,21 +3,16 @@ package halflife.bus;
 import halflife.bus.concurrent.AVar;
 import halflife.bus.concurrent.Atom;
 import halflife.bus.key.Key;
-import halflife.bus.registry.ConcurrentRegistry;
-import halflife.bus.registry.DefaultingRegistry;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.pcollections.TreePVector;
-import reactor.core.Dispatcher;
-import reactor.core.dispatch.SynchronousDispatcher;
-import reactor.fn.Consumer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -118,6 +113,37 @@ public class StreamTest extends AbstractStreamTest {
     intStream.notify(Key.wrap("key1"), 3);
     intStream.notify(Key.wrap("key1"), 4);
     assertThat(res.get(1, TimeUnit.SECONDS), is(4));
+  }
+
+  @Test
+  public void divideTest() {
+    List<Integer> even = new ArrayList<>();
+    List<Integer> odd = new ArrayList<>();
+
+    Key evenKey = Key.wrap("even");
+    Key oddKey = Key.wrap("odd");
+    Key numbersKey = Key.wrap("numbers");
+
+    Stream<Integer> intStream = new Stream<>(environment);
+    intStream.divide(numbersKey,
+                     (k, v) -> {
+                       return v % 2 == 0 ? evenKey : oddKey;
+                     });
+
+    intStream.consume(evenKey, (Integer i) -> {
+      even.add(i);
+    });
+
+    intStream.consume(oddKey, (Integer i) -> {
+      odd.add(i);
+    });
+
+    for (int i = 0; i < 10; i++) {
+      intStream.notify(numbersKey, i);
+    }
+
+    assertThat(even, is(Arrays.asList(0, 2, 4, 6, 8)));
+    assertThat(odd, is(Arrays.asList(1, 3, 5, 7, 9)));
   }
 
   @Test
