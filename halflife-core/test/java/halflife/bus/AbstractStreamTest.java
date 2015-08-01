@@ -10,9 +10,9 @@ import reactor.fn.Consumer;
 
 public class AbstractStreamTest {
 
-  protected Environment                                          environment;
-  protected DefaultingRegistry<Key, KeyedConsumer<Key, Integer>> consumerRegistry;
-  protected Consumer<Throwable>                                  dispatchErrorHandler;
+  protected Environment             environment;
+  protected DefaultingRegistry<Key> consumerRegistry;
+  protected Consumer<Throwable>     dispatchErrorHandler;
 
   @Before
   public void setup() {

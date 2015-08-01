@@ -10,10 +10,10 @@ import reactor.fn.Consumer;
 
 public class AbstractFirehoseTest {
 
-  protected Firehose<Key, Integer>                               firehose;
-  protected Environment                                          environment;
-  protected DefaultingRegistry<Key, KeyedConsumer<Key, Integer>> consumerRegistry;
-  protected Consumer<Throwable>                                  dispatchErrorHandler;
+  protected Firehose<Key>           firehose;
+  protected Environment             environment;
+  protected DefaultingRegistry<Key> consumerRegistry;
+  protected Consumer<Throwable>     dispatchErrorHandler;
 
   @Before
   public void setup() {

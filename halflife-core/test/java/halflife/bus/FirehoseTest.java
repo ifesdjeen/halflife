@@ -5,7 +5,6 @@ import halflife.bus.key.Key;
 import org.junit.Test;
 import reactor.core.Dispatcher;
 import reactor.core.dispatch.ThreadPoolExecutorDispatcher;
-import reactor.fn.Consumer;
 import reactor.fn.tuple.Tuple;
 import reactor.fn.tuple.Tuple2;
 
@@ -121,7 +120,7 @@ public class FirehoseTest extends AbstractFirehoseTest {
       latch2.countDown();
     });
 
-    firehose.unregister(k -> ((String)k.getPart(0)).startsWith("key"));
+    firehose.unregister(k -> ((String) k.getPart(0)).startsWith("key"));
     firehose.notify(k1, 1);
     firehose.notify(k2, 1);
     firehose.notify(k3, 1);
@@ -135,18 +134,18 @@ public class FirehoseTest extends AbstractFirehoseTest {
   public void errorTest() throws InterruptedException {
     AVar<Throwable> caught = new AVar<>();
     Dispatcher asyncDispatcher = new ThreadPoolExecutorDispatcher(2, 100);
-    Firehose<Key, Integer> asyncFirehose = new Firehose<>(asyncDispatcher,
-                                                          consumerRegistry,
-                                                          null,
-                                                          throwable -> caught.set(throwable));
+    Firehose<Key> asyncFirehose = new Firehose<>(asyncDispatcher,
+                                                 consumerRegistry,
+                                                 null,
+                                                 throwable -> caught.set(throwable));
     Key k1 = Key.wrap("key1");
 
-    asyncFirehose.on(k1, (i) -> {
+    asyncFirehose.on(k1, (Integer i) -> {
       int j = i / 0;
     });
 
     asyncFirehose.notify(k1, 1);
-    
+
     assertTrue(caught.get(1, TimeUnit.MINUTES) instanceof ArithmeticException);
 
     asyncDispatcher.shutdown();
