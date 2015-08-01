@@ -28,7 +28,7 @@ public class Stream<V> {
   public Stream(Environment environment) {
     this(environment,
          new Firehose(environment.getDispatcher("sync"),
-                      new ConcurrentRegistry<Key, KeyedConsumer<Key, V>>(),
+                      new ConcurrentRegistry<Key>(),
                       null,
                       null));
   }
@@ -40,7 +40,7 @@ public class Stream<V> {
                 Consumer<Throwable> consumeErrorHandler) {
     this(environment,
          new Firehose(environment.getDispatcher("sync"),
-                      new ConcurrentRegistry<Key, KeyedConsumer<Key, V>>(),
+                      new ConcurrentRegistry<Key>(),
                       new reactor.fn.Consumer<Throwable>() {
                         @Override
                         public void accept(Throwable throwable) {
@@ -65,7 +65,7 @@ public class Stream<V> {
 
   public Stream<V> withDispatcher(String dispatcher) {
     return new Stream<V>(environment,
-                         firehose.copy(environment.getDispatcher(dispatcher)));
+                         firehose.withDispatcher(environment.getDispatcher(dispatcher)));
   }
 
   @SuppressWarnings(value = {"unchecked"})

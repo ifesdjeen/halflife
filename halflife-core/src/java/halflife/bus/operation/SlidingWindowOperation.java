@@ -3,13 +3,14 @@ package halflife.bus.operation;
 import halflife.bus.Firehose;
 import halflife.bus.KeyedConsumer;
 import halflife.bus.concurrent.Atom;
+import halflife.bus.key.Key;
 import org.pcollections.PVector;
 import org.pcollections.TreePVector;
 
 import java.util.List;
 import java.util.function.UnaryOperator;
 
-public class SlidingWindowOperation<SRC, DST, V> implements KeyedConsumer<SRC, V> {
+public class SlidingWindowOperation<SRC extends Key, DST extends Key, V> implements KeyedConsumer<SRC, V> {
 
   private final Atom<PVector<V>>        buffer;
   private final Firehose                firehose;
