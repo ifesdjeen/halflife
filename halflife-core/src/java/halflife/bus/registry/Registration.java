@@ -1,10 +1,13 @@
 package halflife.bus.registry;
 
-public interface Registration<K, V> {
+import halflife.bus.KeyedConsumer;
+import halflife.bus.key.Key;
 
-  K getSelector();
+public interface Registration<K> {
 
-  V getObject();
+  K getSelector(); // TODO: Rename to getKey, since we don't really have selectors in their old meaning
+
+  <V> KeyedConsumer<K, V> getObject();
 
   // cancelAfterUse?
 }
