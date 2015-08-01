@@ -252,7 +252,7 @@ public class StreamTest extends AbstractStreamTest {
     intStream.unregister((Predicate<Key>) key -> true);
     intStream.notify(k1, 1);
 
-    assertThat(latch.getCount(), is(2L));
+    assertThat(latch.getCount(), is(1L));
   }
 
 
