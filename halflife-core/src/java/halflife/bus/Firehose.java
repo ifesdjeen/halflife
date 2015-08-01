@@ -1,6 +1,7 @@
 package halflife.bus;
 
 import halflife.bus.concurrent.LazyVar;
+import halflife.bus.key.Key;
 import halflife.bus.registry.DefaultingRegistry;
 import halflife.bus.registry.KeyMissMatcher;
 import halflife.bus.registry.Registration;
@@ -15,16 +16,16 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 
-public class Firehose<K, V> {
+public class Firehose<K extends Key> {
 
-  private final Dispatcher                                 dispatcher;
-  private final DefaultingRegistry<K, KeyedConsumer<K, V>> consumerRegistry;
-  private final Consumer<Throwable>                        dispatchErrorHandler;
-  private final Consumer<Throwable>                        consumeErrorHandler;
-  private final LazyVar<HashWheelTimer>                    timer;
+  private final Dispatcher              dispatcher;
+  private final DefaultingRegistry<K>   consumerRegistry;
+  private final Consumer<Throwable>     dispatchErrorHandler;
+  private final Consumer<Throwable>     consumeErrorHandler;
+  private final LazyVar<HashWheelTimer> timer;
 
   public Firehose(Dispatcher dispatcher,
-                  DefaultingRegistry<K, KeyedConsumer<K, V>> registry,
+                  DefaultingRegistry<K> registry,
                   Consumer<Throwable> dispatchErrorHandler,
                   Consumer<Throwable> consumeErrorHandler) {
     this.dispatcher = dispatcher;
@@ -37,19 +38,19 @@ public class Firehose<K, V> {
     });
   }
 
-  public Firehose<K, V> copy(Dispatcher dispatcher) {
-    return new Firehose<K, V>(dispatcher,
-                              consumerRegistry,
-                              dispatchErrorHandler,
-                              consumeErrorHandler);
+  public Firehose<K> withDispatcher(Dispatcher dispatcher) {
+    return new Firehose<K>(dispatcher,
+                           consumerRegistry,
+                           dispatchErrorHandler,
+                           consumeErrorHandler);
   }
 
-  public Firehose<K, V> notify(K key, V ev) {
+  public <V> Firehose notify(K key, V ev) {
     Assert.notNull(key, "Key cannot be null.");
     Assert.notNull(ev, "Event cannot be null.");
 
     dispatcher.dispatch(ev, t -> {
-      for (Registration<K, ? extends KeyedConsumer<K, V>> reg : consumerRegistry.select(key)) {
+      for (Registration<K> reg : consumerRegistry.select(key)) {
         try {
           reg.getObject().accept(key, t);
         } catch (Throwable e) {
@@ -63,18 +64,23 @@ public class Firehose<K, V> {
     return this;
   }
 
-  public Firehose<K, V> on(K key, KeyedConsumer<K, V> consumer) {
+  public <V> Firehose on(K key, KeyedConsumer<K, V> consumer) {
     consumerRegistry.register(key, consumer);
     return this;
   }
 
-  public Firehose<K, V> on(K key, SimpleConsumer<V> consumer) {
-    consumerRegistry.register(key, (k_, value) -> consumer.accept(value));
+  public <V> Firehose on(K key, SimpleConsumer<V> consumer) {
+    consumerRegistry.register(key, new KeyedConsumer<K, V>() {
+      @Override
+      public void accept(K key, V value) {
+        consumer.accept(value);
+      }
+    });
     return this;
   }
 
-  public Firehose<K, V> miss(KeyMissMatcher<K> matcher,
-                             Function<K, Map<K, ? extends KeyedConsumer<K, V>>> supplier) {
+  public Firehose miss(KeyMissMatcher<K> matcher,
+                       Function<K, Map<K, KeyedConsumer>> supplier) {
     consumerRegistry.addKeyMissMatcher(matcher, supplier);
     return this;
   }
@@ -87,7 +93,7 @@ public class Firehose<K, V> {
     return consumerRegistry.unregister(pred);
   }
 
-  public Registry<K, KeyedConsumer<K, V>> getConsumerRegistry() {
+  public <V> Registry<K> getConsumerRegistry() {
     return this.consumerRegistry;
   }
 
