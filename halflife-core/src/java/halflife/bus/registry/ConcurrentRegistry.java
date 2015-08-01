@@ -1,13 +1,14 @@
 package halflife.bus.registry;
 
+import halflife.bus.KeyedConsumer;
 import halflife.bus.concurrent.Atom;
+import halflife.bus.key.Key;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
 import org.pcollections.PVector;
 import org.pcollections.TreePVector;
 import reactor.fn.tuple.Tuple;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -17,10 +18,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
+public class ConcurrentRegistry<K extends Key> implements DefaultingRegistry<K> {
 
-  private final Atom<PMap<K, PVector<Registration<K, ? extends V>>>>     lookupMap;
-  private final Map<KeyMissMatcher<K>, Function<K, Map<K, ? extends V>>> keyMissMatchers;
+  private final Atom<PMap<K, PVector<Registration<K>>>>                    lookupMap;
+  private final Map<KeyMissMatcher<K>, Function<K, Map<K, KeyedConsumer>>> keyMissMatchers;
 
   public ConcurrentRegistry() {
     this.lookupMap = new Atom<>(HashTreePMap.empty());
@@ -28,13 +29,13 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
   }
 
   @Override
-  public void addKeyMissMatcher(KeyMissMatcher<K> matcher, Function<K, Map<K, ? extends V>> supplier) {
+  public void addKeyMissMatcher(KeyMissMatcher<K> matcher, Function<K, Map<K, KeyedConsumer>> supplier) {
     this.keyMissMatchers.put(matcher, supplier);
   }
 
   @Override
-  public Registration<K, V> register(K obj, V handler) {
-    final PVector<Registration<K, ? extends V>> lookedUpArr = lookupMap.deref().get(obj);
+  public <V extends KeyedConsumer> Registration<K> register(K obj, V handler) {
+    final PVector<Registration<K>> lookedUpArr = lookupMap.deref().get(obj);
 
     if (lookedUpArr == null) {
       final SimpleRegistration<K, V> reg = new SimpleRegistration<>(obj,
@@ -43,19 +44,19 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
                                                                     reg1 -> lookupMap.deref()
                                                                                      .get(obj)
                                                                                      .remove(handler));
-      final PVector<Registration<K, ? extends V>> emptyArr = TreePVector.singleton(reg);
+      final PVector<Registration<K>> emptyArr = TreePVector.singleton(reg);
 
       lookupMap.swap(old -> old.plus(obj, emptyArr));
 
       return reg;
 
     } else {
-      final Registration<K, V> reg = new SimpleRegistration<>(obj,
-                                                              handler,
-                                                              // TODO: FIX REMOVES!!
-                                                              reg1 -> lookupMap.deref()
-                                                                               .get(obj)
-                                                                               .remove(reg1));
+      final Registration<K> reg = new SimpleRegistration<>(obj,
+                                                           handler,
+                                                           // TODO: FIX REMOVES!!
+                                                           reg1 -> lookupMap.deref()
+                                                                            .get(obj)
+                                                                            .remove(reg1));
       lookupMap.swap(old -> old.plus(obj, old.get(obj).plus(reg)));
       return reg;
     }
@@ -65,7 +66,7 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
   @Override
   public boolean unregister(K key) {
     return lookupMap.swapReturnOther((map) -> {
-      PMap<K, PVector<Registration<K, ? extends V>>> newv = map.minus(key);
+      PMap<K, PVector<Registration<K>>> newv = map.minus(key);
 
       return Tuple.of(newv,
                       map.containsKey(key));
@@ -80,7 +81,7 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
                                   .filter(pred)
                                   .collect(Collectors.toList());
 
-      PMap<K, PVector<Registration<K, ? extends V>>> newv = map.minusAll(unsubscribeKys);
+      PMap<K, PVector<Registration<K>>> newv = map.minusAll(unsubscribeKys);
 
       return Tuple.of(newv,
                       !unsubscribeKys.isEmpty());
@@ -88,7 +89,7 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
   }
 
   @Override
-  public List<Registration<K, ? extends V>> select(final K key) {
+  public List<Registration<K>> select(final K key) {
     return
       lookupMap.swap(old -> {
         if (old.containsKey(key)) {
@@ -100,16 +101,16 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
                                   return m.getKey().test(key);
                                 })
                                 .map(
-                                  (Map.Entry<KeyMissMatcher<K>, Function<K, Map<K, ? extends V>>> m) -> {
+                                  (Map.Entry<KeyMissMatcher<K>, Function<K, Map<K, KeyedConsumer>>> m) -> {
                                     return m.getValue();
                                   })
-                                .flatMap((Function<K, Map<K, ? extends V>> m) -> {
+                                .flatMap((Function<K, Map<K, KeyedConsumer>> m) -> {
                                   return m.apply(key).entrySet().stream();
                                 })
                                 .reduce(old,
-                                        (PMap<K, PVector<Registration<K, ? extends V>>> acc,
-                                         Map.Entry<K, ? extends V> entry) -> {
-                                          Registration<K, V> reg = new SimpleRegistration<K, V>(
+                                        (PMap<K, PVector<Registration<K>>> acc,
+                                         Map.Entry<K, KeyedConsumer> entry) -> {
+                                          Registration<K> reg = new SimpleRegistration<K, KeyedConsumer>(
                                             entry.getKey(),
                                             entry.getValue(),
                                             // TODO: Fix removes!
@@ -141,11 +142,11 @@ public class ConcurrentRegistry<K, V> implements DefaultingRegistry<K, V> {
 
 
   @Override
-  public Iterator<Registration<K, ? extends V>> iterator() {
+  public Iterator<Registration<K>> iterator() {
     return this.stream().iterator();
   }
 
-  public Stream<Registration<K, ? extends V>> stream() {
+  public Stream<Registration<K>> stream() {
     return this.lookupMap.deref().values().stream().flatMap(i -> i.stream());
 
 
