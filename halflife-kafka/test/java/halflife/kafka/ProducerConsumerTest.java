@@ -1,10 +1,16 @@
 package halflife.kafka;
 
 import halflife.KafkaDownstream;
+import halflife.KafkaUpstream;
 import halflife.bus.Firehose;
+import halflife.bus.concurrent.AVar;
+import halflife.bus.concurrent.Atom;
+import halflife.bus.integration.StreamTuple;
 import halflife.bus.key.Key;
 import halflife.bus.registry.ConcurrentRegistry;
 import halflife.bus.registry.DefaultingRegistry;
+import kafka.serializer.Decoder;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.junit.After;
 import org.junit.Before;
@@ -13,7 +19,11 @@ import reactor.Environment;
 
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 public class ProducerConsumerTest {
 
@@ -30,10 +40,21 @@ public class ProducerConsumerTest {
       System.out.println(throwable.getMessage());
       throwable.printStackTrace();
     };
+
     this.firehose = new Firehose<>(environment.getDispatcher("sync"),
                                    consumerRegistry,
-                                   null,
-                                   null);
+                                   new reactor.fn.Consumer<Throwable>() {
+                                     @Override
+                                     public void accept(Throwable throwable) {
+                                       throwable.printStackTrace();
+                                     }
+                                   },
+                                   new reactor.fn.Consumer<Throwable>() {
+                                     @Override
+                                     public void accept(Throwable throwable) {
+                                       throwable.printStackTrace();
+                                     }
+                                   });
   }
 
   @After
@@ -41,9 +62,7 @@ public class ProducerConsumerTest {
     this.environment.shutdown();
   }
 
-  @Test
-  public void simpleUpstreamDownstreamTest() {
-
+  private void initializeKafkaDownstream() {
     Properties producerProperties = new Properties();
     producerProperties.setProperty(ProducerConfig.CLIENT_ID_CONFIG, "testProducer");
     producerProperties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "workstation:9092");
@@ -51,14 +70,57 @@ public class ProducerConsumerTest {
                                    "org.apache.kafka.common.serialization.StringSerializer");
     producerProperties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
                                    "org.apache.kafka.common.serialization.StringSerializer");
-    KafkaDownstream<Key, String> kafkaDownstream = new KafkaDownstream<>(producerProperties,
-                                                                         "test_topic",
-                                                                         (i) -> 0);
+    KafkaDownstream<String, String> kafkaDownstream = new KafkaDownstream<>(producerProperties,
+                                                                            "test_topic",
+                                                                            (i) -> 0);
+    this.firehose.on(Key.wrap("kafkaDownstream"),
+                     kafkaDownstream);
+  }
 
-    //    this.firehose.on(Key.wrap("kafkaDownstream"),
-    //                     kafkaDownstream);
+  private void initializeKafkaUpstream() {
+    Properties consumerProperties = new Properties();
+    consumerProperties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "workstation:9092");
+    consumerProperties.setProperty("zookeeper.connect", "workstation:2181");
+    consumerProperties.setProperty("group.id", "testGroup");
+    consumerProperties.setProperty("auto.offset.reset", "largest");
+    consumerProperties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
+    consumerProperties.setProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "1000");
+    consumerProperties.setProperty(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "1000");
 
+    new KafkaUpstream<Key, String>(firehose,
+                                   consumerProperties,
+                                   "test_topic",
+                                   new Decoder<Key>() {
+                                     @Override
+                                     public Key fromBytes(byte[] bytes) {
+                                       return Key.wrap(new String(bytes));
+                                     }
+                                   },
+                                   new Decoder<String>() {
+                                     @Override
+                                     public String fromBytes(byte[] bytes) {
+                                       return new String(bytes);
+                                     }
+                                   });
+  }
 
+  @Test
+  public void simpleUpstreamDownstreamTest() throws InterruptedException {
+    initializeKafkaDownstream();
+    initializeKafkaUpstream();
+
+    AVar<Key> key = new AVar<>();
+    AVar<String> value = new AVar<>();
+    this.firehose.on(Key.wrap("testKey"), (Key k, String v) -> {
+      key.set(k);
+      value.set(v);
+    });
+
+    this.firehose.notify(Key.wrap("kafkaDownstream"),
+                         new StreamTuple<String, String>("testKey", "testValue"));
+
+    assertThat(value.get(1, TimeUnit.SECONDS), is("testValue"));
+    assertThat(key.get(1, TimeUnit.SECONDS), is(Key.wrap("testKey")));
   }
 
   @Test
@@ -100,5 +162,3 @@ public class ProducerConsumerTest {
 
   }
 }
-
-
