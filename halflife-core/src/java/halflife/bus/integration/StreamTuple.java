@@ -1,8 +1,6 @@
 package halflife.bus.integration;
 
-import halflife.bus.key.Key;
-
-public final class StreamTuple<K extends Key, V> {
+public final class StreamTuple<K, V> {
 
   private final K key;
   private final V value;
