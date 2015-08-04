@@ -258,7 +258,14 @@ consumingChannel.get();
 consumingChannel.get();
 // => 2
 ```
+# Thanks
 
+Thanks to JProfiler for providing an open-source license for using a great profiling
+tool:
+
+<a href="http://www.ej-technologies.com/products/jprofiler/overview.html">
+<img src="https://www.ej-technologies.com/images/product_banners/jprofiler_large.png" />
+</a>
 # License
 
 Copyright © 2014 Alex Petrov
