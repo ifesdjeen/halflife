@@ -6,7 +6,10 @@ import halflife.bus.registry.DefaultingRegistry;
 import halflife.bus.registry.KeyMissMatcher;
 import halflife.bus.registry.Registration;
 import halflife.bus.registry.Registry;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.Dispatcher;
+import reactor.core.processor.RingBufferProcessor;
 import reactor.core.support.Assert;
 import reactor.fn.Consumer;
 import reactor.fn.timer.HashWheelTimer;
@@ -18,11 +21,12 @@ import java.util.function.Predicate;
 
 public class Firehose<K extends Key> {
 
-  private final Dispatcher              dispatcher;
-  private final DefaultingRegistry<K>   consumerRegistry;
-  private final Consumer<Throwable>     dispatchErrorHandler;
-  private final Consumer<Throwable>     consumeErrorHandler;
-  private final LazyVar<HashWheelTimer> timer;
+  private final Dispatcher                    dispatcher;
+  private final DefaultingRegistry<K>         consumerRegistry;
+  private final Consumer<Throwable>           dispatchErrorHandler;
+  private final Consumer<Throwable>           consumeErrorHandler;
+  private final LazyVar<HashWheelTimer>       timer;
+  private final RingBufferProcessor<Runnable> processor;
 
   public Firehose(Dispatcher dispatcher,
                   DefaultingRegistry<K> registry,
@@ -32,6 +36,33 @@ public class Firehose<K extends Key> {
     this.consumerRegistry = registry;
     this.dispatchErrorHandler = dispatchErrorHandler;
     this.consumeErrorHandler = consumeErrorHandler;
+
+
+    processor = RingBufferProcessor.create();
+    processor.subscribe(new Subscriber<Runnable>() {
+
+      @Override
+      public void onSubscribe(Subscription subscription) {
+      }
+
+      @Override
+      public void onNext(Runnable runnable) {
+        System.out.println(runnable);
+        runnable.run();
+      }
+
+      @Override
+      public void onError(Throwable throwable) {
+      }
+
+      @Override
+      public void onComplete() {
+        System.out.println(3);
+
+      }
+    });
+
+
 
     this.timer = new LazyVar<>(() -> {
       return new HashWheelTimer(10); // TODO: configurable hash wheel size!
@@ -48,19 +79,32 @@ public class Firehose<K extends Key> {
   public <V> Firehose notify(K key, V ev) {
     Assert.notNull(key, "Key cannot be null.");
     Assert.notNull(ev, "Event cannot be null.");
-
-    dispatcher.dispatch(ev, t -> {
+    Runnable r = () -> {
+      System.out.println(key);
       for (Registration<K> reg : consumerRegistry.select(key)) {
         try {
-          reg.getObject().accept(key, t);
+
+          reg.getObject().accept(key, ev);
         } catch (Throwable e) {
           if (consumeErrorHandler != null) {
             consumeErrorHandler.accept(e);
           }
         }
       }
-    }, dispatchErrorHandler);
+    };
 
+    //    dispatcher.dispatch(ev, t -> {
+    //      for (Registration<K> reg : consumerRegistry.select(key)) {
+    //        try {
+    //          reg.getObject().accept(key, t);
+    //        } catch (Throwable e) {
+    //          if (consumeErrorHandler != null) {
+    //            consumeErrorHandler.accept(e);
+    //          }
+    //        }
+    //      }
+    //    }, dispatchErrorHandler);
+    //
     return this;
   }
 
