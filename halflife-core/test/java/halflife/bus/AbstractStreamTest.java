@@ -1,14 +1,14 @@
 package halflife.bus;
 
-import halflife.bus.key.Key;
-import halflife.bus.registry.ConcurrentRegistry;
-import halflife.bus.registry.DefaultingRegistry;
 import org.junit.After;
 import org.junit.Before;
-import reactor.Environment;
-import reactor.fn.Consumer;
+
+import java.util.concurrent.TimeUnit;
 
 public class AbstractStreamTest {
+
+  public static final long     LATCH_TIMEOUT   = 10;
+  public static final TimeUnit LATCH_TIME_UNIT = TimeUnit.SECONDS;
 
   @Before
   public void setup() {
