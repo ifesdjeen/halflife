@@ -9,6 +9,7 @@ import org.pcollections.TreePVector;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +31,7 @@ public class StreamTest extends AbstractStreamTest {
 
     intStream.notify(Key.wrap("key1"), 1);
 
-    assertThat(res.get(1, TimeUnit.SECONDS), is(2));
+    assertThat(res.get(LATCH_TIMEOUT, LATCH_TIME_UNIT), is(2));
   }
 
   @Test
@@ -57,7 +58,7 @@ public class StreamTest extends AbstractStreamTest {
       latch.await(1, TimeUnit.SECONDS);
       assertThat(counter.get(), is(1));
     }
-    assertThat(res.get(1, TimeUnit.SECONDS), is(4));
+    assertThat(res.get(LATCH_TIMEOUT, LATCH_TIME_UNIT), is(4));
   }
 
   @Test
@@ -78,7 +79,7 @@ public class StreamTest extends AbstractStreamTest {
     intStream.notify(Key.wrap("key1"), 2);
     intStream.notify(Key.wrap("key1"), 3);
 
-    assertThat(res.get(1, TimeUnit.SECONDS), is(9));
+    assertThat(res.get(LATCH_TIMEOUT, LATCH_TIME_UNIT), is(9));
   }
 
   @Test
@@ -97,7 +98,7 @@ public class StreamTest extends AbstractStreamTest {
     intStream.notify(Key.wrap("key1"), 2);
     intStream.notify(Key.wrap("key1"), 3);
 
-    assertThat(res.get(1, TimeUnit.SECONDS), is(9));
+    assertThat(res.get(LATCH_TIMEOUT, LATCH_TIME_UNIT), is(9));
   }
 
   @Test
@@ -112,13 +113,15 @@ public class StreamTest extends AbstractStreamTest {
     intStream.notify(Key.wrap("key1"), 2);
     intStream.notify(Key.wrap("key1"), 3);
     intStream.notify(Key.wrap("key1"), 4);
-    assertThat(res.get(1, TimeUnit.SECONDS), is(4));
+    assertThat(res.get(LATCH_TIMEOUT, LATCH_TIME_UNIT), is(4));
   }
 
   @Test
-  public void divideTest() {
-    List<Integer> even = new ArrayList<>();
-    List<Integer> odd = new ArrayList<>();
+  public void divideTest() throws InterruptedException {
+    CountDownLatch evenLatch = new CountDownLatch(5);
+    CountDownLatch oddLatch = new CountDownLatch(5);
+    List<Integer> even = new CopyOnWriteArrayList<>();
+    List<Integer> odd = new CopyOnWriteArrayList<>();
 
     Key evenKey = Key.wrap("even");
     Key oddKey = Key.wrap("odd");
@@ -132,17 +135,21 @@ public class StreamTest extends AbstractStreamTest {
 
     intStream.consume(evenKey, (Integer i) -> {
       even.add(i);
+      evenLatch.countDown();
     });
 
     intStream.consume(oddKey, (Integer i) -> {
       odd.add(i);
+      oddLatch.countDown();
     });
 
     for (int i = 0; i < 10; i++) {
       intStream.notify(numbersKey, i);
     }
 
+    evenLatch.await(LATCH_TIMEOUT, LATCH_TIME_UNIT);
     assertThat(even, is(Arrays.asList(0, 2, 4, 6, 8)));
+    oddLatch.await(LATCH_TIMEOUT, LATCH_TIME_UNIT);
     assertThat(odd, is(Arrays.asList(1, 3, 5, 7, 9)));
   }
 

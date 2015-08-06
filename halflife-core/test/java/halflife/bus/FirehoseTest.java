@@ -93,14 +93,13 @@ public class FirehoseTest extends AbstractFirehoseTest {
     firehose.on(k, (i) -> {
       latch2.countDown();
       latch1.countDown();
-      System.out.println(latch2);
     });
 
     firehose.notify(k, 1);
+    latch1.await(10, TimeUnit.SECONDS);
     firehose.unregister(k);
     firehose.notify(k, 1);
 
-    latch1.await(1, TimeUnit.SECONDS);
     latch2.await(1, TimeUnit.SECONDS);
     assertThat(latch2.getCount(), is(1L));
   }
