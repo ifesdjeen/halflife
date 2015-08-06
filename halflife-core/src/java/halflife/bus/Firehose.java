@@ -6,7 +6,6 @@ import halflife.bus.registry.*;
 import org.reactivestreams.Processor;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
-import reactor.core.Dispatcher;
 import reactor.core.processor.RingBufferProcessor;
 import reactor.core.support.Assert;
 import reactor.fn.Consumer;
@@ -22,6 +21,7 @@ import java.util.function.Predicate;
 public class Firehose<K extends Key> {
 
   private final static int DEFAULT_RING_BUFFER_SIZE = 2048;
+
   private final DefaultingRegistry<K>         consumerRegistry;
   private final Consumer<Throwable>           errorHandler;
   private final LazyVar<HashWheelTimer>       timer;
@@ -48,7 +48,6 @@ public class Firehose<K extends Key> {
     this.consumerRegistry = registry;
     this.errorHandler = dispatchErrorHandler;
     this.processor = processor;
-
     this.processor.subscribe(new Subscriber<Runnable>() {
 
       private volatile Subscription sub;
@@ -61,7 +60,7 @@ public class Firehose<K extends Key> {
 
       @Override
       public void onNext(Runnable runnable) {
-        runnable.run(); // TODO: need for try/catch here?
+        runnable.run();
         sub.request(1);
       }
 
@@ -137,5 +136,10 @@ public class Firehose<K extends Key> {
 
   public HashWheelTimer getTimer() {
     return this.timer.get();
+  }
+
+  public void shutdown() {
+    processor.onComplete();
+
   }
 }
