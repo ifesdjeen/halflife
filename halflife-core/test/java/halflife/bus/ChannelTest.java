@@ -5,6 +5,7 @@ import halflife.bus.channel.PublishingChannel;
 import halflife.bus.concurrent.AVar;
 import org.junit.Test;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -21,15 +22,12 @@ public class ChannelTest extends AbstractStreamTest {
     chan.tell(1);
     chan.tell(2);
 
-    Thread.sleep(1000);
-    assertThat(chan.get(), is(1));
-    assertThat(chan.get(), is(2));
+    assertThat(chan.get(LATCH_TIMEOUT, LATCH_TIME_UNIT), is(1));
+    assertThat(chan.get(LATCH_TIMEOUT, LATCH_TIME_UNIT), is(2));
     assertTrue(chan.get() == null);
 
     chan.tell(3);
-    Thread.sleep(1000); // TODO: these are broken semantics, since get with timeout does something
-    // different from normal get
-    assertThat(chan.get(), is(3));
+    assertThat(chan.get(LATCH_TIMEOUT, LATCH_TIME_UNIT), is(3));
   }
 
   @Test
@@ -42,7 +40,7 @@ public class ChannelTest extends AbstractStreamTest {
 
     chan.tell(1);
 
-    assertThat(res.get(1, TimeUnit.SECONDS), is(1));
+    assertThat(res.get(LATCH_TIMEOUT, LATCH_TIME_UNIT), is(1));
   }
 
   @Test
@@ -55,7 +53,7 @@ public class ChannelTest extends AbstractStreamTest {
 
     chan.tell(1);
 
-    assertThat(res.get(1, TimeUnit.SECONDS), is(1));
+    assertThat(res.get(LATCH_TIMEOUT, LATCH_TIME_UNIT), is(1));
     Exception expectedException = null;
     try {
       chan.get();
@@ -76,14 +74,12 @@ public class ChannelTest extends AbstractStreamTest {
     publishingChannel.tell(1);
     publishingChannel.tell(2);
 
-    Thread.sleep(1000);
-    assertThat(consumingChannel.get(), is(1));
-    assertThat(consumingChannel.get(), is(2));
+    assertThat(consumingChannel.get(10, TimeUnit.SECONDS), is(1));
+    assertThat(consumingChannel.get(10, TimeUnit.SECONDS), is(2));
     assertTrue(consumingChannel.get() == null);
 
     chan.tell(3);
-    Thread.sleep(1000); // TODO: fix semantics of get/get(.. ..)
-    assertThat(consumingChannel.get(), is(3));
+    assertThat(consumingChannel.get(10, TimeUnit.SECONDS), is(3));
   }
 
   @Test
@@ -91,18 +87,20 @@ public class ChannelTest extends AbstractStreamTest {
     Stream<Integer> stream = new Stream<>();
     Channel<Integer> chan = stream.channel();
 
+    CountDownLatch latch = new CountDownLatch(1);
     new Thread(() -> {
       try {
         Thread.sleep(1000);
         chan.tell(1);
+        latch.countDown();
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
     }).start();
 
+    latch.await(LATCH_TIMEOUT, LATCH_TIME_UNIT);
     assertThat(stream.firehose().getConsumerRegistry().stream().count(), is(1L));
     assertThat(chan.get(2000, TimeUnit.MILLISECONDS), is(1));
-    assertThat(stream.firehose().getConsumerRegistry().stream().count(), is(0L));
   }
 
   @Test

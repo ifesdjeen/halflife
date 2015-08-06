@@ -14,6 +14,7 @@ public class AbstractFirehoseTest {
 
   protected Firehose<Key> firehose;
   protected ExecutorService executorService;
+
   @Before
   public void setup() {
     this.executorService = Executors.newFixedThreadPool(16);
