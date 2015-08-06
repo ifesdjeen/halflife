@@ -15,13 +15,13 @@ import reactor.fn.Consumer;
 import reactor.fn.timer.HashWheelTimer;
 
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 
 public class Firehose<K extends Key> {
 
-  private final Dispatcher                    dispatcher;
   private final DefaultingRegistry<K>         consumerRegistry;
   private final Consumer<Throwable>           dispatchErrorHandler;
   private final Consumer<Throwable>           consumeErrorHandler;
@@ -32,23 +32,27 @@ public class Firehose<K extends Key> {
                   DefaultingRegistry<K> registry,
                   Consumer<Throwable> dispatchErrorHandler,
                   Consumer<Throwable> consumeErrorHandler) {
-    this.dispatcher = dispatcher;
     this.consumerRegistry = registry;
     this.dispatchErrorHandler = dispatchErrorHandler;
     this.consumeErrorHandler = consumeErrorHandler;
 
 
-    processor = RingBufferProcessor.create();
+    processor = RingBufferProcessor.create(Executors.newFixedThreadPool(2), 32);
+
     processor.subscribe(new Subscriber<Runnable>() {
+
+      private volatile Subscription sub;
 
       @Override
       public void onSubscribe(Subscription subscription) {
+        this.sub = subscription;
+        subscription.request(1);
       }
 
       @Override
       public void onNext(Runnable runnable) {
-        System.out.println(runnable);
         runnable.run();
+        sub.request(1);
       }
 
       @Override
@@ -57,11 +61,8 @@ public class Firehose<K extends Key> {
 
       @Override
       public void onComplete() {
-        System.out.println(3);
-
       }
     });
-
 
 
     this.timer = new LazyVar<>(() -> {
@@ -79,8 +80,8 @@ public class Firehose<K extends Key> {
   public <V> Firehose notify(K key, V ev) {
     Assert.notNull(key, "Key cannot be null.");
     Assert.notNull(ev, "Event cannot be null.");
-    Runnable r = () -> {
-      System.out.println(key);
+
+    processor.onNext(() -> {
       for (Registration<K> reg : consumerRegistry.select(key)) {
         try {
 
@@ -91,20 +92,8 @@ public class Firehose<K extends Key> {
           }
         }
       }
-    };
+    });
 
-    //    dispatcher.dispatch(ev, t -> {
-    //      for (Registration<K> reg : consumerRegistry.select(key)) {
-    //        try {
-    //          reg.getObject().accept(key, t);
-    //        } catch (Throwable e) {
-    //          if (consumeErrorHandler != null) {
-    //            consumeErrorHandler.accept(e);
-    //          }
-    //        }
-    //      }
-    //    }, dispatchErrorHandler);
-    //
     return this;
   }
 
