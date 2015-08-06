@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -23,7 +23,7 @@ public class StreamTest extends AbstractStreamTest {
   @Test
   public void testMap() throws InterruptedException {
     AVar<Integer> res = new AVar<>();
-    Stream<Integer> intStream = new Stream<>(environment);
+    Stream<Integer> intStream = new Stream<>();
 
     intStream.map(Key.wrap("key1"), Key.wrap("key2"), (i) -> i + 1);
     intStream.consume(Key.wrap("key2"), res::set);
@@ -36,7 +36,7 @@ public class StreamTest extends AbstractStreamTest {
   @Test
   public void debounceTest() throws InterruptedException {
     AVar<Integer> res = new AVar<>();
-    Stream<Integer> intStream = new Stream<>(environment);
+    Stream<Integer> intStream = new Stream<>();
 
 
     intStream.map(Key.wrap("key1"), Key.wrap("key2"), (i) -> i + 1);
@@ -63,7 +63,7 @@ public class StreamTest extends AbstractStreamTest {
   @Test
   public void streamStateSupplierTest() throws InterruptedException {
     AVar<Integer> res = new AVar<>(3);
-    Stream<Integer> intStream = new Stream<>(environment);
+    Stream<Integer> intStream = new Stream<>();
 
     intStream.map(Key.wrap("key1"), Key.wrap("key2"), (i) -> i + 1);
     intStream.map(Key.wrap("key2"), Key.wrap("key3"), (Atom<Integer> state) -> {
@@ -84,7 +84,7 @@ public class StreamTest extends AbstractStreamTest {
   @Test
   public void streamStateFnTest() throws InterruptedException {
     AVar<Integer> res = new AVar<>(3);
-    Stream<Integer> intStream = new Stream<>(environment);
+    Stream<Integer> intStream = new Stream<>();
 
     intStream.map(Key.wrap("key1"), Key.wrap("key2"), (i) -> i + 1);
     intStream.map(Key.wrap("key2"), Key.wrap("key3"), (Atom<Integer> state, Integer i) -> {
@@ -103,7 +103,7 @@ public class StreamTest extends AbstractStreamTest {
   @Test
   public void streamFilterTest() throws InterruptedException {
     AVar<Integer> res = new AVar<>(2);
-    Stream<Integer> intStream = new Stream<>(environment);
+    Stream<Integer> intStream = new Stream<>();
 
     intStream.filter(Key.wrap("key1"), Key.wrap("key2"), (i) -> i % 2 == 0);
     intStream.consume(Key.wrap("key2"), res::set);
@@ -124,7 +124,7 @@ public class StreamTest extends AbstractStreamTest {
     Key oddKey = Key.wrap("odd");
     Key numbersKey = Key.wrap("numbers");
 
-    Stream<Integer> intStream = new Stream<>(environment);
+    Stream<Integer> intStream = new Stream<>();
     intStream.divide(numbersKey,
                      (k, v) -> {
                        return v % 2 == 0 ? evenKey : oddKey;
@@ -149,7 +149,7 @@ public class StreamTest extends AbstractStreamTest {
   @Test
   public void partitionTest() throws InterruptedException {
     AVar<List<Integer>> res = new AVar<>();
-    Stream<Integer> intStream = new Stream<>(environment);
+    Stream<Integer> intStream = new Stream<>();
 
     intStream.partition(Key.wrap("key1"), Key.wrap("key2"), (i) -> {
       return i.size() == 5;
@@ -172,7 +172,7 @@ public class StreamTest extends AbstractStreamTest {
   @Test
   public void slideTest() throws InterruptedException {
     AVar<List<Integer>> res = new AVar<>(6);
-    Stream<Integer> intStream = new Stream<>(environment);
+    Stream<Integer> intStream = new Stream<>();
 
     intStream.slide(Key.wrap("key1"), Key.wrap("key2"), (i) -> {
       return i.subList(i.size() > 5 ? i.size() - 5 : 0,
@@ -197,7 +197,7 @@ public class StreamTest extends AbstractStreamTest {
     Key k2 = Key.wrap("key2");
 
     CountDownLatch latch = new CountDownLatch(1);
-    Stream<Integer> intStream = new Stream<>(environment);
+    Stream<Integer> intStream = new Stream<>();
 
     intStream.map(k1, k2, (i) -> i + 1);
     intStream.consume(k2, (i) -> latch.countDown());
@@ -214,7 +214,7 @@ public class StreamTest extends AbstractStreamTest {
     Key k2 = Key.wrap("key2");
 
     CountDownLatch latch = new CountDownLatch(2);
-    Stream<Integer> intStream = new Stream<>(environment);
+    Stream<Integer> intStream = new Stream<>();
 
     intStream.map(k1, k2, (i) -> {
       latch.countDown();
@@ -235,9 +235,10 @@ public class StreamTest extends AbstractStreamTest {
     Key k2 = Key.wrap("key2");
 
     CountDownLatch latch = new CountDownLatch(1);
-    Stream<Integer> intStream = new Stream<>(environment);
+    Stream<Integer> intStream = new Stream<>();
 
-    intStream.withDispatcher("workQueue")
+    intStream.fork(Executors.newFixedThreadPool(2),
+                   2048)
              .map(k1, k2, (i) -> {
                try {
                  Thread.sleep(100);

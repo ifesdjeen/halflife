@@ -17,7 +17,7 @@ public class AnonymousStreamTest extends AbstractStreamTest {
 
   @Test
   public void testMap() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     AVar<Integer> res = new AVar<>();
 
     stream.anonymous(Key.wrap("source"))
@@ -33,7 +33,7 @@ public class AnonymousStreamTest extends AbstractStreamTest {
 
   @Test
   public void testFilter() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     AVar<Integer> res = new AVar<>();
 
     stream.anonymous(Key.wrap("source"))
@@ -52,7 +52,7 @@ public class AnonymousStreamTest extends AbstractStreamTest {
 
   @Test
   public void testPartition() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     AVar<List<Integer>> res = new AVar<>();
 
     stream.anonymous(Key.wrap("source"))
@@ -74,7 +74,7 @@ public class AnonymousStreamTest extends AbstractStreamTest {
 
   @Test
   public void testSlide() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     AVar<List<Integer>> res = new AVar<>(6);
 
     stream.anonymous(Key.wrap("source"))
@@ -96,7 +96,7 @@ public class AnonymousStreamTest extends AbstractStreamTest {
 
   @Test
   public void testNotify() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     AVar<Integer> res = new AVar<>();
 
     AnonymousStream<Integer> s = stream.anonymous(Key.wrap("source"));
@@ -112,7 +112,7 @@ public class AnonymousStreamTest extends AbstractStreamTest {
 
   @Test
   public void testUnregister() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     CountDownLatch latch = new CountDownLatch(2);
 
     AnonymousStream<Integer> s = stream.anonymous(Key.wrap("source"));
@@ -132,7 +132,7 @@ public class AnonymousStreamTest extends AbstractStreamTest {
   @Test
   public void testRedirect() throws InterruptedException {
     Key destination = Key.wrap("destination");
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     AVar<Integer> res = new AVar<>();
 
     AnonymousStream<Integer> s = stream.anonymous(Key.wrap("source"));

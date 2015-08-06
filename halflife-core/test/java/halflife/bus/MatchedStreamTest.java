@@ -16,7 +16,7 @@ public class MatchedStreamTest extends AbstractStreamTest {
 
   @Test
   public void mapTest() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     AVar<Integer> res = new AVar<>();
 
     stream.matched(key -> key.getPart(0).equals("source"))
@@ -31,7 +31,7 @@ public class MatchedStreamTest extends AbstractStreamTest {
 
   @Test
   public void testFilter() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     AVar<Integer> res = new AVar<>();
 
     stream.matched(key -> key.getPart(0).equals("source"))
@@ -50,7 +50,7 @@ public class MatchedStreamTest extends AbstractStreamTest {
 
   @Test
   public void testPartition() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     AVar<List<Integer>> res = new AVar<>();
 
     stream.matched(key -> key.getPart(0).equals("source"))
@@ -72,7 +72,7 @@ public class MatchedStreamTest extends AbstractStreamTest {
 
   @Test
   public void testSlide() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     AVar<List<Integer>> res = new AVar<>(6);
 
     stream.matched(key -> key.getPart(0).equals("source"))

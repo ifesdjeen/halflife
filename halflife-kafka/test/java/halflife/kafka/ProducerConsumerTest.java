@@ -4,62 +4,34 @@ import halflife.KafkaDownstream;
 import halflife.KafkaUpstream;
 import halflife.bus.Firehose;
 import halflife.bus.concurrent.AVar;
-import halflife.bus.concurrent.Atom;
 import halflife.bus.integration.StreamTuple;
 import halflife.bus.key.Key;
-import halflife.bus.registry.ConcurrentRegistry;
-import halflife.bus.registry.DefaultingRegistry;
 import kafka.serializer.Decoder;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import reactor.Environment;
 
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 public class ProducerConsumerTest {
 
-  protected Firehose<Key>           firehose;
-  protected Environment             environment;
-  protected DefaultingRegistry<Key> consumerRegistry;
-  protected Consumer<Throwable>     dispatchErrorHandler;
+  protected Firehose<Key> firehose;
 
   @Before
   public void setup() {
-    this.environment = new Environment();
-    this.consumerRegistry = new ConcurrentRegistry<>();
-    this.dispatchErrorHandler = throwable -> {
-      System.out.println(throwable.getMessage());
-      throwable.printStackTrace();
-    };
-
-    this.firehose = new Firehose<>(environment.getDispatcher("sync"),
-                                   consumerRegistry,
-                                   new reactor.fn.Consumer<Throwable>() {
-                                     @Override
-                                     public void accept(Throwable throwable) {
-                                       throwable.printStackTrace();
-                                     }
-                                   },
-                                   new reactor.fn.Consumer<Throwable>() {
-                                     @Override
-                                     public void accept(Throwable throwable) {
-                                       throwable.printStackTrace();
-                                     }
-                                   });
+    this.firehose = new Firehose<>();
   }
 
   @After
   public void teardown() {
-    this.environment.shutdown();
+
   }
 
   private void initializeKafkaDownstream() {

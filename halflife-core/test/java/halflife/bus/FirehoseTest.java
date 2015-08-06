@@ -87,17 +87,22 @@ public class FirehoseTest extends AbstractFirehoseTest {
   @Test
   public void unsubscribeTest() throws InterruptedException {
     Key k = Key.wrap("key1");
-    final CountDownLatch latch = new CountDownLatch(2);
+    final CountDownLatch latch2 = new CountDownLatch(2);
+    final CountDownLatch latch1 = new CountDownLatch(1);
 
     firehose.on(k, (i) -> {
-      latch.countDown();
+      latch2.countDown();
+      latch1.countDown();
+      System.out.println(latch2);
     });
 
     firehose.notify(k, 1);
     firehose.unregister(k);
     firehose.notify(k, 1);
 
-    assertThat(latch.getCount(), is(1L));
+    latch1.await(1, TimeUnit.SECONDS);
+    latch2.await(1, TimeUnit.SECONDS);
+    assertThat(latch2.getCount(), is(1L));
   }
 
   @Test
@@ -136,10 +141,7 @@ public class FirehoseTest extends AbstractFirehoseTest {
   public void errorTest() throws InterruptedException {
     AVar<Throwable> caught = new AVar<>();
     Dispatcher asyncDispatcher = new ThreadPoolExecutorDispatcher(2, 100);
-    Firehose<Key> asyncFirehose = new Firehose<>(asyncDispatcher,
-                                                 consumerRegistry,
-                                                 null,
-                                                 throwable -> caught.set(throwable));
+    Firehose<Key> asyncFirehose = new Firehose<>(throwable -> caught.set(throwable));
     Key k1 = Key.wrap("key1");
 
     asyncFirehose.on(k1, (Integer i) -> {

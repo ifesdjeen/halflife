@@ -14,25 +14,28 @@ import static org.junit.Assert.assertTrue;
 public class ChannelTest extends AbstractStreamTest {
 
   @Test
-  public void simpleChannelTest() {
-    Stream<Integer> stream = new Stream<>(environment);
+  public void simpleChannelTest() throws InterruptedException {
+    Stream<Integer> stream = new Stream<>();
     Channel<Integer> chan = stream.channel();
 
     chan.tell(1);
     chan.tell(2);
 
+    Thread.sleep(1000);
     assertThat(chan.get(), is(1));
     assertThat(chan.get(), is(2));
     assertTrue(chan.get() == null);
 
     chan.tell(3);
+    Thread.sleep(1000); // TODO: these are broken semantics, since get with timeout does something
+    // different from normal get
     assertThat(chan.get(), is(3));
   }
 
   @Test
   public void channelStreamTest() throws InterruptedException {
     AVar<Integer> res = new AVar<>();
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     Channel<Integer> chan = stream.channel();
 
     chan.stream().consume((i) -> res.set(i));
@@ -45,7 +48,7 @@ public class ChannelTest extends AbstractStreamTest {
   @Test
   public void drainedChannelTest() throws InterruptedException {
     AVar<Integer> res = new AVar<>();
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     Channel<Integer> chan = stream.channel();
 
     chan.stream().consume((i) -> res.set(i));
@@ -64,7 +67,7 @@ public class ChannelTest extends AbstractStreamTest {
 
   @Test
   public void consumingPublishingChannelsTest() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     Channel<Integer> chan = stream.channel();
 
     PublishingChannel<Integer> publishingChannel = chan.publishingChannel();
@@ -73,17 +76,19 @@ public class ChannelTest extends AbstractStreamTest {
     publishingChannel.tell(1);
     publishingChannel.tell(2);
 
+    Thread.sleep(1000);
     assertThat(consumingChannel.get(), is(1));
     assertThat(consumingChannel.get(), is(2));
     assertTrue(consumingChannel.get() == null);
 
     chan.tell(3);
+    Thread.sleep(1000); // TODO: fix semantics of get/get(.. ..)
     assertThat(consumingChannel.get(), is(3));
   }
 
   @Test
   public void timedGetTest() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     Channel<Integer> chan = stream.channel();
 
     new Thread(() -> {
@@ -102,7 +107,7 @@ public class ChannelTest extends AbstractStreamTest {
 
   @Test
   public void timedGetUnresolvedTest() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     Channel<Integer> chan = stream.channel();
 
     assertThat(stream.firehose().getConsumerRegistry().stream().count(), is(1L));
@@ -118,7 +123,7 @@ public class ChannelTest extends AbstractStreamTest {
 
   @Test
   public void channelDisposeTest() throws InterruptedException {
-    Stream<Integer> stream = new Stream<>(environment);
+    Stream<Integer> stream = new Stream<>();
     assertThat(stream.firehose().getConsumerRegistry().stream().count(), is(0L));
     Channel<Integer> chan = stream.channel();
     assertThat(stream.firehose().getConsumerRegistry().stream().count(), is(1L));

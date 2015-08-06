@@ -10,23 +10,14 @@ import reactor.fn.Consumer;
 
 public class AbstractStreamTest {
 
-  protected Environment             environment;
-  protected DefaultingRegistry<Key> consumerRegistry;
-  protected Consumer<Throwable>     dispatchErrorHandler;
-
   @Before
   public void setup() {
-    this.environment = new Environment();
-    this.consumerRegistry = new ConcurrentRegistry<>();
-    this.dispatchErrorHandler = throwable -> {
-      System.out.println(throwable.getMessage());
-      throwable.printStackTrace();
-    };
+
   }
 
   @After
   public void teardown() {
-    this.environment.shutdown();
+
   }
 
 
