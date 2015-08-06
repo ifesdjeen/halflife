@@ -2,7 +2,6 @@ package halflife.bus;
 
 import halflife.bus.channel.ConsumingChannel;
 import halflife.bus.channel.PublishingChannel;
-import halflife.bus.concurrent.AVar;
 import halflife.bus.concurrent.Atom;
 import org.pcollections.PVector;
 import reactor.fn.tuple.Tuple;
@@ -11,6 +10,7 @@ import reactor.fn.tuple.Tuple2;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class Channel<T> implements PublishingChannel<T>, ConsumingChannel<T> {
 
@@ -54,16 +54,34 @@ public class Channel<T> implements PublishingChannel<T>, ConsumingChannel<T> {
     });
   }
 
-  public T get(int time, TimeUnit timeUnit) throws InterruptedException {
-    AVar<T> aVar = new AVar<>();
-
-    Runnable cancelFn = this.stream.cancellableConsumer(aVar::set);
-
-    try {
-      return aVar.get(time, timeUnit);
-    } finally {
-      cancelFn.run();
+  public T get(long time, TimeUnit timeUnit) throws InterruptedException {
+    if (isDrained.get()) {
+      throw new RuntimeException("Channel is already being drained by the stream.");
     }
+
+    return state.swapReturnOther(new Predicate<PVector<T>>() {
+                                   @Override
+                                   public boolean test(PVector<T> ts) {
+                                     return !ts.isEmpty();
+                                   }
+                                 },
+                                 new Function<PVector<T>, Tuple2<PVector<T>, T>>() {
+                                   @Override
+                                   public Tuple2<PVector<T>, T> apply(PVector<T> buffer) {
+                                     if (buffer.size() == 0) {
+                                       return Tuple.of(buffer,
+                                                       null);
+                                     }
+
+                                     T t = buffer.get(0);
+                                     if (t == null) {
+                                       return null;
+                                     } else {
+                                       return Tuple.of(buffer.subList(1, buffer.size()),
+                                                       t);
+                                     }
+                                   }
+                                 });
   }
 
   public AnonymousStream<T> stream() {
