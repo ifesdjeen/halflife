@@ -6,6 +6,7 @@ import halflife.bus.registry.DefaultingRegistry;
 import halflife.bus.registry.KeyMissMatcher;
 import halflife.bus.registry.Registration;
 import halflife.bus.registry.Registry;
+import org.reactivestreams.Processor;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.Dispatcher;
@@ -26,7 +27,7 @@ public class Firehose<K extends Key> {
   private final Consumer<Throwable>           dispatchErrorHandler;
   private final Consumer<Throwable>           consumeErrorHandler;
   private final LazyVar<HashWheelTimer>       timer;
-  private final RingBufferProcessor<Runnable> processor;
+  private final Processor<Runnable, Runnable> processor;
 
   public Firehose(Dispatcher dispatcher,
                   DefaultingRegistry<K> registry,
