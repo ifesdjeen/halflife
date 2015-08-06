@@ -2,10 +2,7 @@ package halflife.bus;
 
 import halflife.bus.concurrent.LazyVar;
 import halflife.bus.key.Key;
-import halflife.bus.registry.DefaultingRegistry;
-import halflife.bus.registry.KeyMissMatcher;
-import halflife.bus.registry.Registration;
-import halflife.bus.registry.Registry;
+import halflife.bus.registry.*;
 import org.reactivestreams.Processor;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -16,6 +13,7 @@ import reactor.fn.Consumer;
 import reactor.fn.timer.HashWheelTimer;
 
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -23,24 +21,35 @@ import java.util.function.Predicate;
 
 public class Firehose<K extends Key> {
 
+  private final static int DEFAULT_RING_BUFFER_SIZE = 2048;
   private final DefaultingRegistry<K>         consumerRegistry;
-  private final Consumer<Throwable>           dispatchErrorHandler;
-  private final Consumer<Throwable>           consumeErrorHandler;
+  private final Consumer<Throwable>           errorHandler;
   private final LazyVar<HashWheelTimer>       timer;
   private final Processor<Runnable, Runnable> processor;
 
-  public Firehose(Dispatcher dispatcher,
-                  DefaultingRegistry<K> registry,
-                  Consumer<Throwable> dispatchErrorHandler,
-                  Consumer<Throwable> consumeErrorHandler) {
+  public Firehose() {
+    this(new ConcurrentRegistry<K>(),
+         RingBufferProcessor.create(Executors.newFixedThreadPool(2), DEFAULT_RING_BUFFER_SIZE),
+         throwable -> {
+           System.out.println(throwable.getMessage());
+           throwable.printStackTrace();
+         });
+  }
+
+  public Firehose(Consumer<Throwable> errorHandler) {
+    this(new ConcurrentRegistry<K>(),
+         RingBufferProcessor.create(Executors.newFixedThreadPool(2), DEFAULT_RING_BUFFER_SIZE),
+         errorHandler);
+  }
+
+  public Firehose(DefaultingRegistry<K> registry,
+                  Processor<Runnable, Runnable> processor,
+                  Consumer<Throwable> dispatchErrorHandler) {
     this.consumerRegistry = registry;
-    this.dispatchErrorHandler = dispatchErrorHandler;
-    this.consumeErrorHandler = consumeErrorHandler;
+    this.errorHandler = dispatchErrorHandler;
+    this.processor = processor;
 
-
-    processor = RingBufferProcessor.create(Executors.newFixedThreadPool(2), 32);
-
-    processor.subscribe(new Subscriber<Runnable>() {
+    this.processor.subscribe(new Subscriber<Runnable>() {
 
       private volatile Subscription sub;
 
@@ -52,16 +61,18 @@ public class Firehose<K extends Key> {
 
       @Override
       public void onNext(Runnable runnable) {
-        runnable.run();
+        runnable.run(); // TODO: need for try/catch here?
         sub.request(1);
       }
 
       @Override
       public void onError(Throwable throwable) {
+        errorHandler.accept(throwable);
       }
 
       @Override
       public void onComplete() {
+        this.sub.cancel();
       }
     });
 
@@ -71,11 +82,11 @@ public class Firehose<K extends Key> {
     });
   }
 
-  public Firehose<K> withDispatcher(Dispatcher dispatcher) {
-    return new Firehose<K>(dispatcher,
-                           consumerRegistry,
-                           dispatchErrorHandler,
-                           consumeErrorHandler);
+  public Firehose<K> fork(ExecutorService executorService,
+                          int ringBufferSize) {
+    return new Firehose<K>(this.consumerRegistry,
+                           RingBufferProcessor.create(executorService, ringBufferSize),
+                           this.errorHandler);
   }
 
   public <V> Firehose notify(K key, V ev) {
@@ -84,14 +95,7 @@ public class Firehose<K extends Key> {
 
     processor.onNext(() -> {
       for (Registration<K> reg : consumerRegistry.select(key)) {
-        try {
-
-          reg.getObject().accept(key, ev);
-        } catch (Throwable e) {
-          if (consumeErrorHandler != null) {
-            consumeErrorHandler.accept(e);
-          }
-        }
+        reg.getObject().accept(key, ev);
       }
     });
 

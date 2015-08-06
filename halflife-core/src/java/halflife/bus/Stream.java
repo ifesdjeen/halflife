@@ -4,68 +4,38 @@ import halflife.bus.concurrent.Atom;
 import halflife.bus.key.Key;
 import halflife.bus.operation.PartitionOperation;
 import halflife.bus.operation.SlidingWindowOperation;
-import halflife.bus.registry.ConcurrentRegistry;
 import halflife.bus.registry.KeyMissMatcher;
 import halflife.bus.state.DefaultStateProvider;
 import halflife.bus.state.StateProvider;
 import halflife.bus.state.StatefulSupplier;
 import org.pcollections.PVector;
 import org.pcollections.TreePVector;
-import reactor.Environment;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.*;
 
 public class Stream<V> {
 
-  private final Environment   environment;
   private final Firehose      firehose;
   private final StateProvider stateProvider;
 
-  @SuppressWarnings(value = {"unchecked"})
-  public Stream(Environment environment) {
-    this(environment,
-         new Firehose(environment.getDispatcher("sync"),
-                      new ConcurrentRegistry<Key>(),
-                      null,
-                      null));
+  public Stream() {
+    this(new Firehose());
   }
 
 
-  @SuppressWarnings(value = {"unchecked"})
-  public Stream(Environment environment,
-                Consumer<Throwable> dispatchErrorHandler,
-                Consumer<Throwable> consumeErrorHandler) {
-    this(environment,
-         new Firehose(environment.getDispatcher("sync"),
-                      new ConcurrentRegistry<Key>(),
-                      new reactor.fn.Consumer<Throwable>() {
-                        @Override
-                        public void accept(Throwable throwable) {
-                          dispatchErrorHandler.accept(throwable);
-                        }
-                      },
-                      new reactor.fn.Consumer<Throwable>() {
-                        @Override
-                        public void accept(Throwable throwable) {
-                          consumeErrorHandler.accept(throwable);
-                        }
-                      }));
-  }
-
-  @SuppressWarnings(value = {"unchecked"})
-  protected Stream(Environment environment,
-                   Firehose firehose) {
-    this.environment = environment;
+  protected Stream(Firehose firehose) {
     this.firehose = firehose;
     this.stateProvider = new DefaultStateProvider();
   }
 
-  public Stream<V> withDispatcher(String dispatcher) {
-    return new Stream<V>(environment,
-                         firehose.withDispatcher(environment.getDispatcher(dispatcher)));
+  public Stream<V> fork(ExecutorService executorService,
+                        int ringBufferSize) {
+    return new Stream<V>(firehose.fork(executorService,
+                                       ringBufferSize));
   }
 
   @SuppressWarnings(value = {"unchecked"})
@@ -79,8 +49,7 @@ public class Stream<V> {
                                                             emit,
                                                             destination));
 
-    return new Stream<>(environment,
-                        firehose);
+    return new Stream<>(firehose);
   }
 
   @SuppressWarnings(value = {"unchecked"})
@@ -93,8 +62,7 @@ public class Stream<V> {
       }
     });
 
-    return new Stream<>(environment,
-                        firehose);
+    return new Stream<>(firehose);
   }
 
 
@@ -109,8 +77,7 @@ public class Stream<V> {
                                                                 drop,
                                                                 destination));
 
-    return new Stream<>(environment,
-                        firehose);
+    return new Stream<>(firehose);
   }
 
   @SuppressWarnings(value = {"unchecked"})
@@ -124,8 +91,7 @@ public class Stream<V> {
       }
     });
 
-    return new Stream<>(environment,
-                        firehose);
+    return new Stream<>(firehose);
   }
 
   @SuppressWarnings(value = {"unchecked"})
@@ -142,8 +108,7 @@ public class Stream<V> {
       }
     });
 
-    return new Stream<>(environment,
-                        firehose);
+    return new Stream<>(firehose);
   }
 
   @SuppressWarnings(value = {"unchecked"})
@@ -160,8 +125,7 @@ public class Stream<V> {
       }
     });
 
-    return new Stream<>(environment,
-                        firehose);
+    return new Stream<>(firehose);
   }
 
   @SuppressWarnings(value = {"unchecked"})
@@ -177,8 +141,7 @@ public class Stream<V> {
       }
     });
 
-    return new Stream<>(environment,
-                        firehose);
+    return new Stream<>(firehose);
   }
 
   @SuppressWarnings(value = {"unchecked"})
@@ -202,8 +165,7 @@ public class Stream<V> {
       }
     });
 
-    return new Stream<>(environment,
-                        firehose);
+    return new Stream<>(firehose);
   }
 
   @SuppressWarnings(value = {"unchecked"})
