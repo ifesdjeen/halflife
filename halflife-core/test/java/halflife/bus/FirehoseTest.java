@@ -30,8 +30,9 @@ public class FirehoseTest extends AbstractFirehoseTest {
     firehose.notify(Key.wrap("key1"), 1);
     firehose.notify(Key.wrap("key2"), 2);
 
-    assertThat(val.get(10, TimeUnit.MILLISECONDS), is(1));
-    assertThat(val2.get(10, TimeUnit.MILLISECONDS), is(2));
+    assertThat(val.get(10, TimeUnit.SECONDS), is(1));
+    assertThat(val2.get(10, TimeUnit.SECONDS), is(2));
+
   }
 
   @Test
@@ -125,6 +126,7 @@ public class FirehoseTest extends AbstractFirehoseTest {
     firehose.notify(k2, 1);
     firehose.notify(k3, 1);
 
+    latch2.await(10, TimeUnit.SECONDS);
 
     assertThat(latch2.getCount(), is(0L));
     assertThat(latch.getCount(), is(2L));
