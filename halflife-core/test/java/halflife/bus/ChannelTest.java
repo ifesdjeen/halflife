@@ -111,11 +111,12 @@ public class ChannelTest extends AbstractStreamTest {
     assertThat(stream.firehose().getConsumerRegistry().stream().count(), is(1L));
     boolean caught = false;
     try {
-      chan.get(100, TimeUnit.MILLISECONDS);
+      System.out.println(chan.get(100, TimeUnit.MILLISECONDS));
     } catch (Exception e) {
       caught = true;
     }
     assertThat(caught, is(true));
+    chan.dispose();
     assertThat(stream.firehose().getConsumerRegistry().stream().count(), is(0L));
   }
 
@@ -128,4 +129,5 @@ public class ChannelTest extends AbstractStreamTest {
     chan.dispose();
     assertThat(stream.firehose().getConsumerRegistry().stream().count(), is(0L));
   }
+
 }
