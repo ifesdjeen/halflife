@@ -54,34 +54,42 @@ public class Channel<T> implements PublishingChannel<T>, ConsumingChannel<T> {
     });
   }
 
-  public T get(long time, TimeUnit timeUnit) throws InterruptedException {
+  public T get(long time, TimeUnit timeUnit) {
     if (isDrained.get()) {
       throw new RuntimeException("Channel is already being drained by the stream.");
     }
 
-    return state.swapReturnOther(new Predicate<PVector<T>>() {
-                                   @Override
-                                   public boolean test(PVector<T> ts) {
-                                     return !ts.isEmpty();
-                                   }
-                                 },
-                                 new Function<PVector<T>, Tuple2<PVector<T>, T>>() {
-                                   @Override
-                                   public Tuple2<PVector<T>, T> apply(PVector<T> buffer) {
-                                     if (buffer.size() == 0) {
-                                       return Tuple.of(buffer,
-                                                       null);
-                                     }
+    long start = System.currentTimeMillis();
+    T value = state.swapReturnOther(new Predicate<PVector<T>>() {
+                                      @Override
+                                      public boolean test(PVector<T> ts) {
+                                        return !ts.isEmpty() ||
+                                               (System.currentTimeMillis() - start > TimeUnit.MILLISECONDS.convert(time,
+                                                                                                                   timeUnit));
+                                      }
+                                    },
+                                    new Function<PVector<T>, Tuple2<PVector<T>, T>>() {
+                                      @Override
+                                      public Tuple2<PVector<T>, T> apply(PVector<T> buffer) {
+                                        if (buffer.size() == 0) {
+                                          return Tuple.of(buffer,
+                                                          null);
+                                        }
 
-                                     T t = buffer.get(0);
-                                     if (t == null) {
-                                       return null;
-                                     } else {
-                                       return Tuple.of(buffer.subList(1, buffer.size()),
-                                                       t);
-                                     }
-                                   }
-                                 });
+                                        T t = buffer.get(0);
+                                        if (t == null) {
+                                          return null;
+                                        } else {
+                                          return Tuple.of(buffer.subList(1, buffer.size()),
+                                                          t);
+                                        }
+                                      }
+                                    });
+    if (value == null) {
+      throw new RuntimeException("Channel is empty");
+    } else {
+      return value;
+    }
   }
 
   public AnonymousStream<T> stream() {
